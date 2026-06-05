@@ -1,0 +1,610 @@
+/* @settings
+
+name: Literature Flow
+id: literature-flow
+settings:
+	- 
+		id: lf-paper-title-font-size
+		title: Reference paper title font size
+		type: variable-number-slider
+		default: 14
+		format: px
+		min: 8
+		max: 24
+		step: 1
+	-
+		id: lf-paper-title-font-weight
+		title: Reference paper title font weight
+		type: variable-number-slider
+		default: 400
+		format: px
+		min: 100
+		max: 900
+		step: 100
+	-
+		id: lf-paper-author-font-size
+		title: Reference paper author font size
+		type: variable-number-slider
+		default: 12
+		format: px
+		min: 8
+		max: 24
+		step: 1
+	-
+		id: lf-paper-author-font-weight
+		title: Reference paper author font weight
+		type: variable-number-slider
+		default: 400
+		format: px
+		min: 100
+		max: 900
+		step: 100
+	-
+		id: lf-paper-citekey-font-size
+		title: Reference paper citekey font size
+		type: variable-number-slider
+		default: 12
+		format: px
+		min: 8
+		max: 24
+		step: 1
+	-
+		id: lf-paper-citekey-font-weight
+		title: Reference paper citekey font weight
+		type: variable-number-slider
+		default: 400
+		format: px
+		min: 100
+		max: 900
+		step: 100
+	-
+		id: lf-paper-line-thickness
+		title: Reference paper line thickness
+		type: variable-number-slider
+		default: 1
+		format: px
+		min: 1
+		max: 4
+		step: 1
+	-
+		id: lf-paper-index-card-padding
+		title: Reference paper index card padding
+		type: variable-number-slider
+		default: 0.5
+		format: rem
+		min: 0.25
+		max: 2
+		step: 0.25
+	-
+		id: lf-paper-reference-card-padding
+		title: Reference paper reference card padding
+		type: variable-number-slider
+		default: 0.5
+		format: rem
+		min: 0.25
+		max: 2
+		step: 0.25
+	-
+		id: lf-paper-background-color
+		title: Primary background color
+		type: variable-color
+		format: hex
+		default: var(--background-primary)
+	-
+		id: lf-paper-background-secondary-color
+		title: Secondary background color
+		type: variable-color
+		format: hex
+		default: var(--background-secondary)
+	-
+		id: lf-paper-title-link-color
+		title: Reference paper title link color
+		type: variable-color
+		format: hex
+		default: var(--text-normal)
+	-
+		id: lf-paper-title-link-hover-color
+		title: Reference paper title link hover color
+		type: variable-color
+		format: hex
+		default: var(--text-accent)
+	-
+		id: lf-paper-author-link-color
+		title: Reference paper author link color
+		type: variable-color
+		format: hex
+		default: var(--text-muted)
+	-
+		id: lf-paper-author-link-hover-color
+		title: Reference paper author link hover color
+		type: variable-color
+		format: hex
+		default: var(--text-accent)
+	- 
+		id: lf-paper-citekey-link-color
+		title: Reference paper citekey link color
+		type: variable-color
+		format: hex
+		default: var(--text-muted)
+	- 
+		id: lf-paper-citekey-link-hover-color
+		title: Reference paper citekey link hover color
+		type: variable-color
+		format: hex
+		default: var(--text-accent)
+	-
+		id: lf-paper-buttons-color
+		title: Reference paper buttons color
+		type: variable-color
+		format: hex
+		default: var(--icon-color)
+	-
+		id: lf-paper-buttons-hover-color
+		title: Reference paper buttons hover color
+		type: variable-color
+		format: hex
+		default: var(--text-accent)
+	-
+		id: lf-paper-line-color
+		title: Reference paper line color
+		type: variable-color
+		format: hex
+		default: var(--color-base-30)
+		
+*/
+body {
+	--lf-paper-title-font-size: small;
+	--lf-paper-author-font-size: small;
+	--lf-paper-title-font-weight: 400;
+	--lf-paper-author-font-weight: 400;
+	--lf-paper-abstract-font-size: small;
+	--lf-paper-abstract-font-weight: 400;
+	--lf-paper-citekey-font-size: small;
+	--lf-paper-citekey-font-weight: 400;
+	--lf-paper-line-thickness: 1px;
+	--lf-paper-index-card-padding: 0.5rem;
+	--lf-paper-reference-card-padding: 0.5rem;
+	--lf-paper-background-color: var(--background-primary);
+	--lf-paper-background-secondary-color: var(--background-secondary);
+	--lf-paper-title-link-color: var(--text-normal);
+	--lf-paper-title-link-hover-color: var(--text-accent);
+	--lf-paper-author-link-color: var(--text-muted);
+	--lf-paper-author-link-hover-color: var(--text-accent);
+	--lf-paper-citekey-link-color: var(--text-muted);
+	--lf-paper-citekey-link-hover-color: var(--text-accent);
+	--lf-paper-abstract-color: var(--text-muted);
+	--lf-paper-buttons-color: var(--icon-color);
+	--lf-paper-buttons-hover-color: var(--text-accent);
+	--lf-paper-line-color: var(--color-base-30);
+	--lf-paper-disable-opacity: 0.5;
+}
+/* following removes the jumping when scrollbar is visible */
+
+[data-type='literature-flow-view'] > .view-content {
+	scrollbar-gutter: stable both-edges;
+}
+
+.lf-view-title {
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+}
+
+.lf-no-content {
+	text-align: center;
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-no-content-subtext {
+	border: var(--lf-paper-line-thickness) solid var(--lf-paper-line-color);
+	border-radius: 0.25rem;
+	padding: 0.5rem;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-medium);
+	color: var(--text-faint);
+	margin-top: 0.5rem;
+}
+
+/* Literature Flow list */
+.lf-literature-flow {
+	display: block;
+}
+
+/* .lf-plugin-name{
+	position: sticky;
+    top: 0;
+	z-index: 1000;
+} */
+
+/* RootPaperCard */
+.lf-root-paper {
+	border: var(--lf-paper-line-thickness) solid var(--lf-paper-line-color);
+	background: var(--lf-paper-background-color);
+	border-radius: 0.25rem;
+	padding: var(--lf-paper-index-card-padding);
+	margin: 0.25rem 0 0 0;
+	position: relative;
+}
+
+.lf-active-index {
+	border: var(--lf-paper-line-thickness) solid
+		var(--lf-paper-buttons-hover-color);
+}
+
+/* Paper Heading */
+.lf-paper-info {
+	position: absolute;
+	top: 1rem;
+	right: 0.5rem;
+	color: var(--lf-paper-title-link-color);
+}
+.lf-paper-title {
+	font-size: var(--lf-paper-title-font-size);
+	font-weight: var(--lf-paper-title-font-weight);
+	cursor: pointer;
+	padding-bottom: 0.25rem;
+}
+.lf-paper-title-disabled {
+	cursor: default;
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-paper-title a {
+	color: var(--lf-paper-title-link-color);
+	text-decoration: none;
+}
+
+.lf-paper-title a:hover {
+	color: var(--lf-paper-title-link-hover-color);
+}
+
+.lf-paper-abstract {
+	display: block;
+	font-size: var(--lf-paper-abstract-font-size);
+	color: var(--lf-paper-abstract-color);
+	margin-bottom: 0.25rem;
+}
+
+.lf-paper-abstract-disabled {
+	cursor: default;
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-paper-authors {
+	font-size: var(--lf-paper-author-font-size);
+	font-weight: var(--lf-paper-author-font-weight);
+	display: block;
+	margin-bottom: 0.25rem;
+}
+
+.lf-paper-authors-disabled {
+	cursor: default;
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-paper-abstract-disabled {
+	cursor: default;
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-paper-authors a {
+	color: var(--lf-paper-author-link-color);
+	text-decoration: none;
+}
+
+.lf-paper-authors a:hover {
+	color: var(--lf-paper-author-link-hover-color);
+}
+
+.lf-paper-journal {
+	font-size: var(--lf-paper-author-font-size);
+	font-weight: var(--lf-paper-author-font-weight);
+	display: block;
+	margin-bottom: 0.25rem;
+}
+
+.lf-paper-journal-disabled {
+	cursor: default;
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-paper-tag {
+	word-break: break-all;
+	width: max-content;
+	text-decoration: none;
+	color: var(--text-muted);
+	padding: var(--size-4-1) var(--size-4-2);
+	border-radius: 0.2rem;
+	background-color: rgba(var(--mono-rgb-100), 0.05);
+	line-height: 2;
+	font-size: var(--font-ui-smaller);
+	margin-right: 0.2rem;
+}
+
+.lf-paper-tag a {
+	color: var(--lf-paper-citekey-link-color);
+	text-decoration: none;
+}
+
+.lf-paper-tag a:hover {
+	color: var(--lf-paper-citekey-link-hover-color);
+}
+
+.lf-paper-buttons {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	margin-top: 0.2rem;
+}
+
+.lf-paper-buttons > div {
+	font-size: small;
+	text-align: left;
+	min-width: 16%;
+	padding: 0.25rem;
+	color: var(--lf-paper-buttons-color);
+}
+
+.lf-paper-buttons > .lf-openaccess a {
+	color: var(--lf-paper-buttons-color);
+}
+
+.lf-paper-buttons > .lf-openaccess a:hover {
+	color: var(--lf-paper-buttons-hover-color);
+}
+
+.lf-button-disable {
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-paper-buttons > .lf-copy-metadata-one:hover,
+.lf-copy-metadata-two:hover,
+.lf-copy-metadata-three:hover,
+.lf-button-references:hover,
+.lf-button-citations:hover {
+	color: var(--lf-paper-buttons-hover-color);
+}
+
+.lf-is-local{
+	font-size: var(--font-ui-smaller);
+}
+
+/* Paper List */
+.lf-paper-list {
+	margin: 0.5rem 0 0 0;
+}
+
+.lf-paper-list .lf-paper-heading {
+	padding-top: 0.5rem 0;
+	margin-top: 0.5rem 0 0 0;
+}
+
+.lf-paper-card {
+	border: var(--lf-paper-line-thickness) dotted var(--lf-paper-line-color);
+	background: var(--lf-paper-background-secondary-color);
+	padding: var(--lf-paper-reference-card-padding);
+	margin: 0.5rem 0;
+	border-radius: 0.25rem;
+}
+
+.lf-paper-list-buttons {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.lf-button-disabled {
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.lf-search-form {
+	width: 100%;
+	position: relative;
+}
+
+.lf-search-input {
+	width: 100%;
+	border: none;
+	padding: 0;
+}
+
+.lf-search-input::placeholder {
+	text-align: center;
+}
+
+.lf-plugin-global-copy {
+	position: absolute;
+	top: 0;
+	left: 5px;
+	padding: 0.4rem 0.25rem 0.15rem 0.25rem;
+	border-right: var(--lf-paper-line-thickness) solid
+		var(--lf-paper-line-color);
+	color: var(--lf-paper-buttons-color);
+}
+
+.lf-plugin-global-copy:hover {
+	color: var(--lf-paper-buttons-hover-color);
+}
+
+.lf-plugin-global-copy-disabled {
+	position: absolute;
+	top: 0;
+	left: 5px;
+	padding: 0.4rem 0.25rem 0.15rem 0.25rem;
+	border-right: var(--lf-paper-line-thickness) solid
+		var(--lf-paper-line-color);
+	color: var(--lf-paper-buttons-color);
+	opacity: var(--lf-paper-disable-opacity);
+}
+
+.search-icon {
+	position: absolute;
+	top: 55%;
+	left: 7px;
+	transform: translateY(-50%);
+	color: var(--lf-paper-buttons-color);
+}
+
+.lf-index-no-search {
+	pointer-events: none;
+}
+
+.index-search {
+	position: relative;
+	align-items: center;
+	gap: var(--size-4-1);
+}
+
+.cardCount {
+	position: absolute;
+	right: var(--size-4-1);
+	top: var(--size-4-1);
+	/* padding: 0.25em; */
+	color: var(--text-muted);
+	display: flex;
+	padding: var(--size-4-1) var(--size-4-2);
+	border-radius: var(--tag-radius);
+	background-color: rgba(var(--mono-rgb-100), 0.05);
+	font-weight: var(--font-normal);
+	line-height: 1;
+	font-size: var(--font-ui-smaller);
+}
+
+.lf-loading {
+	text-align: center;
+	width: 70%;
+	margin: 0 auto;
+}
+
+.lf-loading-puff {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	display: block;
+	text-align: center;
+	width: 100%;
+	height: 20px;
+}
+
+/** Settings Dialog **/
+.d-none {
+	display: none;
+}
+.lf-PathLoading,
+.lf-PathError,
+.lf-PathSuccess {
+	font-size: 14px;
+}
+
+.lf-PathLoading {
+	color: var(--text-muted);
+}
+
+.lf-PathError {
+	color: var(--text-error);
+}
+
+.lf-PathSuccess {
+	color: var(--text-accent);
+}
+
+.lf-Warning {
+	color: var(--text-warning);
+}
+
+/* Settings page CSS */
+
+.lf-settings-description {
+	font-size: var(--font-ui-small);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 0.25rem;
+	padding: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+/* Search modal settings */
+
+.lf-search-modal-input-heading {
+	font-variant: var(--h2-variant);
+	line-height: var(--h2-line-height);
+	font-size: var(--h2-size);
+	color: var(--h2-color);
+	font-weight: var(--h2-weight);
+	font-style: var(--h2-style);
+	font-family: var(--h2-font);
+	display: flex;
+	padding: 0.5rem 0;
+	text-align: center;
+	width: 100%;
+}
+.lf-search-modal-input-heading-mode {
+	margin-left: 0.25rem;
+	color: var(--code-normal);
+	font-family: var(--font-monospace);
+	background-color: var(--code-background);
+	border-radius: var(--radius-s);
+	font-size: var(--code-size);
+	padding: 0.1em 0.25em;
+}
+
+.lf-search-modal-input-button {
+	border: none;
+}
+
+.lf-search-modal-input input {
+	width: 100%;
+}
+
+.lf-modal-paper-title {
+	padding-bottom: 0.25rem;
+}
+
+.lf-modal-paper-authors {
+	font-size: var(--lf-paper-author-font-size);
+	font-weight: var(--lf-paper-author-font-weight);
+	display: block;
+}
+
+.lf-modal-paper-year {
+	font-size: var(--lf-paper-author-font-size);
+	font-weight: var(--lf-paper-author-font-weight);
+	display: block;
+}
+
+.lf-setting-item-wrapper {
+	flex-direction: column;
+	align-items: stretch;
+}
+
+.lf-setting-item-wrapper > div {
+	margin-right: 0 !important;
+}
+
+.lf-setting-item-wrapper > div:last-child {
+	padding-bottom: 0;
+}
+
+.lf-group-toggle {
+	display: flex;
+	justify-content: flex-end;
+	padding-top: var(--size-4-2);
+}
+
+.lf-group-toggle .setting-item-description {
+	padding-top: 0;
+}
+
+/* GRAPH */
+.lf-graph-content {
+	width: 100%;
+	position: relative;
+	z-index: 1;
+}
+.lf-graph-paper-card {
+	width: 100%;
+	position: absolute;
+	top: 0;
+}
+
+.lf-csl-search{
+	width: calc(100% - 20px);
+}

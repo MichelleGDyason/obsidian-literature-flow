@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc">
+  <title id="title">Literature Flow</title>
+  <desc id="desc">Open-access literature discovery and citation mapping for Obsidian.</desc>
+  <rect width="1280" height="420" rx="28" fill="#f7f5fb"/>
+  <polygon points="148,198 207,198 267,120 320,120 320,132 273,132 213,210 148,210" fill="#7c6fbd"/>
+  <polygon points="148,198 213,198 273,276 320,276 320,288 267,288 207,210 148,210" fill="#37b9dc"/>
+  <polygon points="306,108 340,126 306,144" fill="#7c6fbd"/>
+  <polygon points="306,264 340,282 306,300" fill="#37b9dc"/>
+  <circle cx="148" cy="204" r="42" fill="#2fb9df"/>
+  <circle cx="350" cy="126" r="30" fill="#61bd45"/>
+  <circle cx="350" cy="282" r="30" fill="#a94ca6"/>
+  <text x="430" y="178" fill="#242126" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="700">Literature Flow</text>
+  <text x="434" y="242" fill="#6d60b4" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Obsidian plugin</text>
+  <text x="434" y="304" fill="#4b4650" font-family="Arial, Helvetica, sans-serif" font-size="30">Open-access discovery and citation mapping</text>
+</svg>

@@ -1,0 +1,55 @@
+import React from 'react'
+
+export const LoadingPuff = () => {
+	return (
+		<div className="lf-loading-puff">
+			<svg viewBox="0 0 40 2" xmlns="http://www.w3.org/2000/svg">
+				<circle
+					fill="var(--lf-paper-buttons-hover-color)"
+					stroke="none"
+					cx="18"
+					cy="1"
+					r="0.15"
+				>
+					<animate
+						attributeName="opacity"
+						dur="2s"
+						values="0;1;0"
+						repeatCount="indefinite"
+						begin="0.1"
+					/>
+				</circle>
+				<circle
+					fill="var(--lf-paper-buttons-hover-color)"
+					stroke="none"
+					cx="20"
+					cy="1"
+					r="0.15"
+				>
+					<animate
+						attributeName="opacity"
+						dur="2s"
+						values="0;1;0"
+						repeatCount="indefinite"
+						begin="0.4"
+					/>
+				</circle>
+				<circle
+					fill="var(--lf-paper-buttons-hover-color)"
+					stroke="none"
+					cx="22"
+					cy="1"
+					r="0.15"
+				>
+					<animate
+						attributeName="opacity"
+						dur="2s"
+						values="0;1;0"
+						repeatCount="indefinite"
+						begin="0.7"
+					/>
+				</circle>
+			</svg>
+		</div>
+	)
+}
