@@ -18,7 +18,7 @@ jobs:
                   fetch-depth: 0
             - uses: pnpm/action-setup@v6
               with:
-                version: 8
+                version: 11.5.1
             - name: Use Node.js
               uses: actions/setup-node@v6
               with:
@@ -32,6 +32,8 @@ jobs:
               id: build
               run: |
                   pnpm install --frozen-lockfile
+                  pnpm run lint
+                  pnpm test
                   pnpm build --if-present
             # Package the required files into a zip
             - name: Package

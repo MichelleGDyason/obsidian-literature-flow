@@ -11,9 +11,7 @@ export const PaperCard = (props: {
 	const paper = props.paper
 	const [isButtonShown, setIsButtonShown] = useState(!props.settings.hideButtonsOnHover)
 	const handleHoverButtons = (isShow: boolean) => {
-		props.settings.hideButtonsOnHover
-			? setIsButtonShown(isShow)
-			: setIsButtonShown(true)
+		setIsButtonShown(props.settings.hideButtonsOnHover ? isShow : true)
 	}
 	return (
 		<div

@@ -47,9 +47,9 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                         onClick={() => {
                             setButtonOne((cur) => {
                                 plugin.settings.formatMetadataCopyOne = !cur;
-                                plugin.saveSettings().then(() => {
-                                    plugin.referenceMapData.reinit(true)
-                                    plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                void plugin.saveSettings().then(() => {
+                                    void plugin.referenceMapData.reinit(true)
+                                    void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                 });
                                 return !cur;
                             });
@@ -72,8 +72,8 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                                 style={{ minWidth: '200px', maxWidth: '500px', minHeight: '100px' }}
                                 onBlur={(e) => {
                                     plugin.settings.metadataCopyTemplateOne = e.target.value;
-                                    plugin.saveSettings();
-                                    plugin.referenceMapData?.reload(RELOAD.VIEW);
+                                    void plugin.saveSettings();
+                                    void plugin.referenceMapData?.reload(RELOAD.VIEW);
                                 }}
                                 spellCheck={false}
                                 defaultValue={plugin.settings.metadataCopyTemplateOne ?? METADATA_COPY_TEMPLATE_ONE}
@@ -97,9 +97,9 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                                     if (isButtonOne) {
                                         setButtonOneBatch((cur) => {
                                             plugin.settings.metadataCopyOneBatch = !cur;
-                                            plugin.saveSettings().then(() => {
-                                                plugin.referenceMapData.reinit(true)
-                                                plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                            void plugin.saveSettings().then(() => {
+                                                void plugin.referenceMapData.reinit(true)
+                                                void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                             });
                                             return !cur;
                                         });
@@ -129,9 +129,9 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                         onClick={() => {
                             setButtonTwo((cur) => {
                                 plugin.settings.formatMetadataCopyTwo = !cur;
-                                plugin.saveSettings().then(() => {
-                                    plugin.referenceMapData.reinit(true)
-                                    plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                void plugin.saveSettings().then(() => {
+                                    void plugin.referenceMapData.reinit(true)
+                                    void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                 });
                                 return !cur;
                             });
@@ -154,8 +154,8 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                                 style={{ minWidth: '200px', maxWidth: '500px', minHeight: '100px' }}
                                 onBlur={(e) => {
                                     plugin.settings.metadataCopyTemplateTwo = e.target.value;
-                                    plugin.saveSettings();
-                                    plugin.referenceMapData?.reload(RELOAD.VIEW)
+                                    void plugin.saveSettings();
+                                    void plugin.referenceMapData?.reload(RELOAD.VIEW)
                                 }}
                                 spellCheck={false}
                                 defaultValue={plugin.settings.metadataCopyTemplateTwo ?? METADATA_COPY_TEMPLATE_TWO}
@@ -179,9 +179,9 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                                     if (isButtonTwo) {
                                         setButtonTwoBatch((cur) => {
                                             plugin.settings.metadataCopyTwoBatch = !cur;
-                                            plugin.saveSettings().then(() => {
-                                                plugin.referenceMapData.reinit(true)
-                                                plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                            void plugin.saveSettings().then(() => {
+                                                void plugin.referenceMapData.reinit(true)
+                                                void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                             });
                                             return !cur;
                                         });
@@ -210,9 +210,9 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                         onClick={() => {
                             setButtonThree((cur) => {
                                 plugin.settings.formatMetadataCopyThree = !cur;
-                                plugin.saveSettings().then(() => {
-                                    plugin.referenceMapData.reinit(true)
-                                    plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                void plugin.saveSettings().then(() => {
+                                    void plugin.referenceMapData.reinit(true)
+                                    void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                 });
                                 return !cur;
                             });
@@ -235,8 +235,8 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                                 style={{ minWidth: '200px', maxWidth: '500px', minHeight: '100px' }}
                                 onBlur={(e) => {
                                     plugin.settings.metadataCopyTemplateThree = e.target.value;
-                                    plugin.saveSettings();
-                                    plugin.referenceMapData?.reload(RELOAD.VIEW)
+                                    void plugin.saveSettings();
+                                    void plugin.referenceMapData?.reload(RELOAD.VIEW)
                                 }}
                                 spellCheck={false}
                                 defaultValue={plugin.settings.metadataCopyTemplateThree ?? METADATA_COPY_TEMPLATE_THREE}
@@ -260,9 +260,9 @@ export function ButtonSettings({ plugin }: { plugin: ReferenceMap }) {
                                     if (isButtonThree) {
                                         setButtonThreeBatch((cur) => {
                                             plugin.settings.metadataCopyThreeBatch = !cur;
-                                            plugin.saveSettings().then(() => {
-                                                plugin.referenceMapData.reinit(true)
-                                                plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                            void plugin.saveSettings().then(() => {
+                                                void plugin.referenceMapData.reinit(true)
+                                                void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                             });
                                             return !cur;
                                         });

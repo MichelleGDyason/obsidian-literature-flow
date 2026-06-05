@@ -1,12 +1,11 @@
 import { CachedMetadata, htmlToMarkdown } from "obsidian";
 import { BibData, CiteKey, Library } from "src/types";
 import { EXCLUDE_FILE_NAMES } from "src/constants";
-import { fragWithHTML } from "src/utils/functions";
+import { areArraysEqual, fragWithHTML } from "src/utils/functions";
 import { getCiteKeyIds } from 'src/utils/postprocess';
 import { getCiteKeys, getPaperIds, extractKeywords } from 'src/utils/parser';
 import { CiteKeyEntry } from "src/apis/bibTypes";
 import CSL from 'citeproc';
-import _ from "lodash";
 
 export class UpdateChecker {
     citeKeys: Set<string>;
@@ -18,8 +17,7 @@ export class UpdateChecker {
     frontmatter = '';
     fileName = '';
     basename = '';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cslEngine: any;
+    cslEngine: CSL.Engine | null;
 
     constructor() {
         this.citeKeys = new Set<string>();
@@ -52,7 +50,7 @@ export class UpdateChecker {
         // checkOrder is used to force update, usually for sidebar order correction.
         if (this.library === null) return false;
         const newCiteKeys = getCiteKeys(this.library, this.fileCache, prefix)
-        if (_.isEqual(Array.from(newCiteKeys), Array.from(this.citeKeys))) {
+        if (areArraysEqual(Array.from(newCiteKeys), Array.from(this.citeKeys))) {
             return false;
         }
         this.citeKeys = newCiteKeys;
@@ -62,7 +60,7 @@ export class UpdateChecker {
 
     checkIndexIdsUpdate = () => {
         const newIds = getPaperIds(this.fileCache)
-        if (_.isEqual(Array.from(newIds), Array.from(this.indexIds))) return false;
+        if (areArraysEqual(Array.from(newIds), Array.from(this.indexIds))) return false;
         this.indexIds = newIds;
         return true;
     }
@@ -72,7 +70,12 @@ export class UpdateChecker {
             this.frontmatter = '';
             return false;
         }
-        const keywords = this.fileMetadataCache?.frontmatter?.[key];
+        const rawKeywords: unknown = this.fileMetadataCache.frontmatter[key];
+        const keywords = typeof rawKeywords === 'string'
+            ? rawKeywords
+            : Array.isArray(rawKeywords)
+                ? rawKeywords.filter((value): value is string => typeof value === 'string').join(' ')
+                : '';
         this.frontmatter = extractKeywords(keywords).unique().join("+");
         return true;
     }
@@ -112,7 +115,7 @@ export class UpdateChecker {
         const cslData: BibData[] = bibMetadataIds.map((id: string[], index: number) => {
             const bib = htmlToMarkdown(fragWithHTML(bibHtml[1][index])).replace(/\n/, ' ')
             const index_ = index + 1 // CSL index starts from 1
-            return { id: id[0], index: index_, bib: bib } as BibData
+            return { id: id[0], index: index_, bib: bib }
         });
         if (cslData.length === 0) return null;
         return cslData

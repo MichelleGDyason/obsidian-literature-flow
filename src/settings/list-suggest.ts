@@ -1,12 +1,25 @@
 // Credits go to Liam's Periodic Notes Plugin: https://github.com/liamcain/obsidian-periodic-notes
 
-import { TAbstractFile, TFile, TFolder } from "obsidian";
-
-import { TextInputSuggest } from "./suggest";
+import { AbstractInputSuggest, App, TAbstractFile, TFile, TFolder } from "obsidian";
 import { cslList } from "src/utils/cslList";
 import { cslLangList } from "src/utils/cslLangList";
 
-export class FileSuggest extends TextInputSuggest<TFile> {
+abstract class LiteratureInputSuggest<T> extends AbstractInputSuggest<T> {
+    protected readonly inputEl: HTMLInputElement;
+
+    constructor(app: App, inputEl: HTMLInputElement) {
+        super(app, inputEl);
+        this.inputEl = inputEl;
+    }
+
+    protected choose(value: string): void {
+        this.setValue(value);
+        this.inputEl.trigger("input");
+        this.close();
+    }
+}
+
+export class FileSuggest extends LiteratureInputSuggest<TFile> {
     getSuggestions(inputStr: string): TFile[] {
         const abstractFiles = this.app.vault.getAllLoadedFiles();
         const files: TFile[] = [];
@@ -30,13 +43,11 @@ export class FileSuggest extends TextInputSuggest<TFile> {
     }
 
     selectSuggestion(file: TFile): void {
-        this.inputEl.value = file.path;
-        this.inputEl.trigger("input");
-        this.close();
+        this.choose(file.path);
     }
 }
 
-export class FolderSuggest extends TextInputSuggest<TFolder> {
+export class FolderSuggest extends LiteratureInputSuggest<TFolder> {
     getSuggestions(inputStr: string): TFolder[] {
         const abstractFiles = this.app.vault.getAllLoadedFiles();
         const folders: TFolder[] = [];
@@ -59,14 +70,12 @@ export class FolderSuggest extends TextInputSuggest<TFolder> {
     }
 
     selectSuggestion(file: TFolder): void {
-        this.inputEl.value = file.path;
-        this.inputEl.trigger("input");
-        this.close();
+        this.choose(file.path);
     }
 }
 
 
-export class CSLListSuggest extends TextInputSuggest<string> {
+export class CSLListSuggest extends LiteratureInputSuggest<string> {
     getSuggestions(inputStr: string): string[] {
         const lowerCaseInputStr = inputStr.toLowerCase();
         const listItem = cslList.filter(item => item.label.toLowerCase().contains(lowerCaseInputStr))
@@ -78,14 +87,11 @@ export class CSLListSuggest extends TextInputSuggest<string> {
     }
 
     selectSuggestion(item: string): void {
-        //using item get value from cslListRaw
-        this.inputEl.value = item;
-        this.inputEl.trigger("input");
-        this.close();
+        this.choose(item);
     }
 }
 
-export class CSLLocaleSuggest extends TextInputSuggest<string> {
+export class CSLLocaleSuggest extends LiteratureInputSuggest<string> {
     getSuggestions(inputStr: string): string[] {
         const lowerCaseInputStr = inputStr.toLowerCase();
         const listItem = cslLangList.filter(item => item.label.toLowerCase().contains(lowerCaseInputStr))
@@ -97,9 +103,6 @@ export class CSLLocaleSuggest extends TextInputSuggest<string> {
     }
 
     selectSuggestion(item: string): void {
-        //using item get value from cslListRaw
-        this.inputEl.value = item;
-        this.inputEl.trigger("input");
-        this.close();
+        this.choose(item);
     }
 }

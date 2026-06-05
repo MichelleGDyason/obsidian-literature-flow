@@ -56,7 +56,7 @@ export class GraphView extends ItemView {
                                     leaf.view.getViewType() === 'markdown' ||
                                     leaf.view.getViewType() === 'empty'
                                 ) {
-                                    this.openGraph()
+                                    void this.openGraph()
                                 }
                             }
                         })
@@ -71,7 +71,7 @@ export class GraphView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "Literature Flow Graph";
+        return `${this.plugin.manifest.name} graph`;
     }
     getIcon() {
         return 'LiteratureFlowGraphIcon'
@@ -79,11 +79,11 @@ export class GraphView extends ItemView {
 
     onResize() {
         super.onResize();
-        this.openGraph() //trigger a re-render
+        void this.openGraph() //trigger a re-render
     }
 
     async onOpen() {
-        this.openGraph()
+        void this.openGraph()
     }
 
     onUnload = () => {

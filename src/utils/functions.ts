@@ -1,7 +1,7 @@
-import { MetadataCache, Notice, TFile, Vault, htmlToMarkdown } from 'obsidian'
-import { CardSpecType, IndexPaper, MetaData } from 'src/types'
+import { MetadataCache, Notice, TFile, Vault } from 'obsidian'
+import { IndexPaper, MetaData } from 'src/types'
 import { templateReplace } from './postprocess';
-import { CanvasData, CanvasNodeData } from 'obsidian/canvas';
+import { AllCanvasNodeData, CanvasData } from 'obsidian/canvas';
 import { Reference } from 'src/apis/s2agTypes';
 
 export function splitString(str: string | undefined, length: number) {
@@ -21,8 +21,11 @@ export const getLinkedFiles = (file: TFile, metadataCache: MetadataCache) => {
 	return []
 }
 
-export const fragWithHTML = (html: string) =>
-	createFragment((frag) => (frag.createDiv().innerHTML = html))
+export const fragWithHTML = (html: string): string =>
+	html
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1')
+		.replace(/<[^>]+>/g, '')
 
 export const errorlog = (data: Record<string, unknown>) => {
 	console.error({ plugin: 'Zotero Annotations', ...data })
@@ -39,27 +42,31 @@ export function areSetsEqual<T>(as: Set<T>, bs: Set<T>) {
 	})
 }
 
+export function areArraysEqual<T>(left: T[], right: T[]): boolean {
+	return left.length === right.length &&
+		left.every((value, index) => value === right[index])
+}
+
+export function uniqueBy<T, K>(items: T[], getKey: (item: T) => K): T[] {
+	const seen = new Set<K>()
+	return items.filter((item) => {
+		const key = getKey(item)
+		if (seen.has(key)) return false
+		seen.add(key)
+		return true
+	})
+}
+
 export function camelToNormalCase(str: string) {
 	return str.replace(/([A-Z])/g, ' $1').replace(/^./, function (str) {
 		return str.toUpperCase()
 	})
 }
 
-export function copyToClipboard(el: string) {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	require('electron').clipboard.write({
-		text: el
-	})
-	new Notice('Copied to clipboard')
-}
-
-export function copyElToClipboard(el: HTMLElement) {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	require('electron').clipboard.write({
-		html: el.outerHTML,
-		text: htmlToMarkdown(el.outerHTML),
-	});
-	new Notice('Copied to clipboard')
+export function copyToClipboard(text: string): void {
+	void activeWindow.navigator.clipboard.writeText(text)
+		.then(() => new Notice('Copied to clipboard'))
+		.catch(() => new Notice('Unable to copy to clipboard'))
 }
 
 export function removeNullReferences(references: IndexPaper[]) {
@@ -82,30 +89,30 @@ export function replaceIllegalFileNameCharactersInString(text: string) {
 
 export async function getCanvasContent(fileCache: string, vault: Vault) {
 	let content = '';
-	const canvasJson: CanvasData = JSON.parse(fileCache);
-	const nodes = canvasJson?.nodes as CanvasNodeData[];
+	const canvasJson = JSON.parse(fileCache) as CanvasData;
+	const nodes: AllCanvasNodeData[] = canvasJson.nodes;
 	if (nodes) {
 		for (const node of nodes) {
-			switch (node.type as CardSpecType) {
+			switch (node.type) {
 				case 'text': {
-					content += node?.text ? node?.text : '';
+					content += node.text;
 					break;
 				}
 				case 'link': {
-					content += node?.url ? node?.url : '';
+					content += node.url;
 					break;
 				}
 				case 'file': {
 					if (node.file) {
 						try {
-							const file = app.vault.getAbstractFileByPath(node.file);
+							const file = vault.getAbstractFileByPath(node.file);
 							if (file instanceof TFile) {
 								const temContent = await vault.read(file);
 								content += temContent;
 							} else {
-								content += node?.file ? node?.file : '';
+								content += node.file;
 							}
-						} catch (err) {
+						} catch {
 							content += '';
 						}
 					}

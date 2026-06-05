@@ -7,13 +7,6 @@ import type { DataAdapter } from "obsidian";
 import { DEFAULT_HEADERS, DEFAULT_ZOTERO_PORT } from "src/constants";
 import { CSLList, PartialCSLEntry } from "src/types";
 
-function getGlobal() {
-    if (window?.activeWindow) return activeWindow;
-    if (window) return window;
-    return global;
-
-}
-
 export async function isZoteroRunning(port: string = DEFAULT_ZOTERO_PORT) {
     const options = {
         hostname: '127.0.0.1',
@@ -22,21 +15,20 @@ export async function isZoteroRunning(port: string = DEFAULT_ZOTERO_PORT) {
         method: 'GET',
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const res: any = await Promise.race([
-        new Promise((resolve, reject) => {
+    const res = await Promise.race<string | null>([
+        new Promise<string | null>((resolve) => {
             const req = http.request(options, res => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => resolve(data));
             });
-            req.on('error', (error: NodeJS.ErrnoException) => {
+            req.on('error', () => {
                 resolve(null); // if connection is refused, return false
             });
             req.end();
         }),
-        new Promise((resolve) => {
-            getGlobal().setTimeout(() => {
+        new Promise<null>((resolve) => {
+            window.setTimeout(() => {
                 resolve(null);
             }, 150);
         }),
@@ -87,8 +79,7 @@ export async function getZBib(
 
     const req = http.request(options);
     req.end();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bib: any = await new Promise((resolve, reject) => {
+    const bib = await new Promise<string>((resolve, reject) => {
         req.on('response', (res) => {
             let data = '';
             res.on('data', (chunk) => data += chunk);
@@ -97,7 +88,7 @@ export async function getZBib(
         req.on('error', reject);
     });
 
-    const str = bib.toString();
+    const str = bib;
 
     await adapter.write(cached, str);
 
@@ -132,15 +123,17 @@ export async function getZUserGroups(
 
                 result.setEncoding('utf8');
                 result.on('data', (chunk) => (output += chunk));
-                result.on('error', (e) => rej(`Error connecting to Zotero: ${e}`));
+                result.on('error', (e) => rej(new Error(`Error connecting to Zotero: ${e.message}`)));
                 result.on('close', () => {
                     rej(new Error('Error: cannot connect to Zotero'));
                 });
                 result.on('end', () => {
                     try {
-                        res(JSON.parse(output).result);
+                        res((JSON.parse(output) as {
+                            result: Array<{ id: number; name: string }>;
+                        }).result);
                     } catch (e) {
-                        rej(e);
+                        rej(e instanceof Error ? e : new Error(String(e)));
                     }
                 });
             }
@@ -195,15 +188,15 @@ export async function getZModified(
 
                 result.setEncoding('utf8');
                 result.on('data', (chunk) => (output += chunk));
-                result.on('error', (e) => rej(`Error connecting to Zotero: ${e}`));
+                result.on('error', (e) => rej(new Error(`Error connecting to Zotero: ${e.message}`)));
                 result.on('close', () => {
                     rej(new Error('Error: cannot connect to Zotero'));
                 });
                 result.on('end', () => {
                     try {
-                        res(JSON.parse(output).result);
+                        res((JSON.parse(output) as { result: CSLList }).result);
                     } catch (e) {
-                        rej(e);
+                        rej(e instanceof Error ? e : new Error(String(e)));
                     }
                 });
             }
@@ -233,7 +226,7 @@ export async function refreshZBib(
         return null;
     }
 
-    const mList = (await getZModified(port, groupId, since)) as CSLList;
+    const mList = await getZModified(port, groupId, since);
 
     if (!mList?.length) {
         return null;
@@ -243,8 +236,7 @@ export async function refreshZBib(
     const newKeys: Set<string> = new Set();
 
     for (const mod of mList) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        mod.id = (mod as any).citekey || (mod as any)['citation-key'];
+        mod.id = mod.citekey ?? mod['citation-key'] ?? mod.id;
         if (!mod.id) continue;
         modified.set(mod.id, mod);
         newKeys.add(mod.id);

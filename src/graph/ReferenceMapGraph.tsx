@@ -1,7 +1,6 @@
-import _ from 'lodash';
 import * as d3 from 'd3';
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import ForceGraph2D, { GraphData, NodeObject } from 'react-force-graph-2d';
+import ForceGraph2D, { ForceGraphMethods, GraphData, NodeObject } from 'react-force-graph-2d';
 import EventBus, { EVENTS } from 'src/events';
 import { IndexPaper, ReferenceMapSettings } from 'src/types';
 import { PaperCard } from 'src/components/PaperCard';
@@ -9,13 +8,25 @@ import { PartialLoading } from 'src/components/PartialLoading';
 import { ReferenceMapData } from 'src/data/data';
 import { UpdateChecker } from 'src/data/updateChecker';
 import { Reference } from 'src/apis/s2agTypes';
+import { uniqueBy } from 'src/utils/functions';
 
 type MapGraphData = {
     paper: IndexPaper
     references: Reference[]
     citations: Reference[]
 }
-const formatData = (data: MapGraphData[]): GraphData => {
+
+type LiteratureNodeData = {
+    id: string
+    paperId: string
+    name: string
+    val: number
+    color: string
+    type: 'index' | 'reference' | 'citation'
+    data: IndexPaper
+}
+
+const formatData = (data: MapGraphData[]): GraphData<LiteratureNodeData> => {
     let maxCitationCount = 1;
     let minCitationCount = 0;
 
@@ -25,17 +36,17 @@ const formatData = (data: MapGraphData[]): GraphData => {
         maxCitationCount = Math.max(maxCitationCount, indexCitationCount);
         minCitationCount = Math.min(minCitationCount, indexCitationCount);
 
-        const nodes = [
+        const nodes: LiteratureNodeData[] = [
             {
                 id: indexId,
                 paperId: item.paper.id,
-                name: item.paper.paper.title,
+                name: item.paper.paper.title ?? indexId,
                 val: indexCitationCount,
                 color: "#61C1E8",
                 type: 'index',
                 data: { id: indexId, location: null, paper: item.paper.paper }
             },
-            ...item.references.map((reference, refIndex) => {
+            ...item.references.map<LiteratureNodeData>((reference, refIndex) => {
                 const referenceId = String(reference.paperId ? reference.paperId : `${indexId}-cited-${refIndex}`);
                 const referenceCitationCount = reference.citationCount ? reference.citationCount : 0;
                 maxCitationCount = Math.max(maxCitationCount, referenceCitationCount);
@@ -43,15 +54,15 @@ const formatData = (data: MapGraphData[]): GraphData => {
 
                 return {
                     id: referenceId,
-                    paperId: reference.paperId,
-                    name: reference.title,
+                    paperId: reference.paperId ?? referenceId,
+                    name: reference.title ?? referenceId,
                     val: referenceCitationCount,
                     color: "#7ABA57",
                     type: 'reference',
                     data: { id: referenceId, location: null, paper: reference }
                 };
             }),
-            ...item.citations.map((citation, citIndex) => {
+            ...item.citations.map<LiteratureNodeData>((citation, citIndex) => {
                 const citationId = String(citation.paperId ? citation.paperId : `${indexId}-citing-${citIndex}`);
                 const citationCitationCount = citation.citationCount ? citation.citationCount : 0;
                 maxCitationCount = Math.max(maxCitationCount, citationCitationCount);
@@ -59,8 +70,8 @@ const formatData = (data: MapGraphData[]): GraphData => {
 
                 return {
                     id: citationId,
-                    paperId: citation.paperId,
-                    name: citation.title,
+                    paperId: citation.paperId ?? citationId,
+                    name: citation.title ?? citationId,
                     val: citationCitationCount,
                     color: "#A15399",
                     type: 'citation',
@@ -87,12 +98,13 @@ const formatData = (data: MapGraphData[]): GraphData => {
     const links = nodesAndLinks.flatMap(({ links }) => links);
 
     // Normalize the citation counts
+    const citationRange = maxCitationCount - minCitationCount || 1;
     nodes.forEach(node => {
-        node.val = 3 + (node.val - minCitationCount) * 20 / (maxCitationCount - minCitationCount);
+        node.val = 3 + (node.val - minCitationCount) * 20 / citationRange;
     });
 
-    const tempData: GraphData = {
-        nodes: _.uniqBy(nodes, 'id'),
+    const tempData: GraphData<LiteratureNodeData> = {
+        nodes: uniqueBy(nodes, (node) => node.id),
         links: links
     }
 
@@ -106,15 +118,14 @@ export const ReferenceMapGraph = (props: {
     referenceMapData: ReferenceMapData
     updateChecker: UpdateChecker
 }) => {
-    const [data, setData] = useState<GraphData>({ nodes: [], links: [] })
+    const [data, setData] = useState<GraphData<LiteratureNodeData>>({ nodes: [], links: [] })
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fgRef = useRef<any>();
-    const [selectedNode, setSelectedNode] = useState<NodeObject>();
+    const fgRef = useRef<ForceGraphMethods<LiteratureNodeData>>();
+    const [selectedNode, setSelectedNode] = useState<NodeObject<LiteratureNodeData>>();
 
     const { settings } = props;
     const { viewManager } = props.referenceMapData;
-    const tempTextColor = getComputedStyle(document.body).getPropertyValue('--text-normal')
+    const tempTextColor = getComputedStyle(activeDocument.body).getPropertyValue('--text-normal')
     // const tempAccentColor = getComputedStyle(document.body).getPropertyValue('--text-accent')
     const lineColor = 'rgba(147, 117, 239, 0.2)' //tempAccentColor ? addAlpha(tempAccentColor, 0.2) : '#3f3f3f';
     const textColor = tempTextColor ? tempTextColor : 'black';
@@ -153,12 +164,9 @@ export const ReferenceMapGraph = (props: {
     useEffect(() => {
         if (fgRef.current) {
             fgRef.current.d3Force("collide",
-                d3.forceCollide().radius((node: d3.SimulationNodeDatum, i: number, nodes: d3.SimulationNodeDatum[]) => {
-                    if ('val' in node) {
-                        return (node as NodeObject).val + 3;
-                    } else {
-                        return 0;
-                    }
+                d3.forceCollide().radius((node: d3.SimulationNodeDatum) => {
+                    const value = (node as Partial<LiteratureNodeData>).val;
+                    return typeof value === 'number' ? value + 3 : 0;
                 }));
             fgRef.current.d3Force("x", d3.forceX(props.width / 2).strength(0.1));
             fgRef.current.d3Force("y", d3.forceY(props.height / 2).strength(0.1));
@@ -169,19 +177,29 @@ export const ReferenceMapGraph = (props: {
         const fetchDataAndUpdate = () => {
             setIsLoading(true)
             const { indexIds, citeKeyMap, fileName, frontmatter, basename } = props.updateChecker;
-            props.referenceMapData.getIndexCards(indexIds, citeKeyMap, fileName, frontmatter, basename)
+            void props.referenceMapData.getIndexCards(indexIds, citeKeyMap, fileName, frontmatter, basename)
                 .then(async (cards) => {
                     //filter out local cards which has isLocal: true property 
                     cards = cards.filter(card => !card.isLocal);
                     const graphData = await fetchData(cards)
                     const newSubgraph = formatData(graphData);
-                    const newNodeIds = new Set(newSubgraph.nodes.map(node => node.id));
+                    const newNodeIds = new Set(
+                        newSubgraph.nodes
+                            .map(node => node.id)
+                            .filter((id): id is string => typeof id === 'string')
+                    );
                     setData(prevData => ({
-                        nodes: _.uniqBy([...prevData.nodes, ...newSubgraph.nodes].filter(node => newNodeIds.has(node.id)), 'id'),
+                        nodes: uniqueBy(
+                            [...prevData.nodes, ...newSubgraph.nodes].filter(node => newNodeIds.has(node.id)),
+                            (node) => node.id
+                        ),
                         links: [...prevData.links, ...newSubgraph.links].filter(link => {
                             const target = typeof link.target === 'object' && link.target !== null ? link.target.id : link.target;
                             const source = typeof link.source === 'object' && link.source !== null ? link.source.id : link.source;
-                            return newNodeIds.has(source) && newNodeIds.has(target);
+                            return source !== undefined &&
+                                target !== undefined &&
+                                newNodeIds.has(String(source)) &&
+                                newNodeIds.has(String(target));
                         })
                     }))
                     setIsLoading(false)
@@ -198,35 +216,36 @@ export const ReferenceMapGraph = (props: {
         props.referenceMapData.library.libraryData
     ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const nodeObject = useCallback((node: NodeObject, ctx: any) => {
+    const nodeObject = useCallback((node: NodeObject<LiteratureNodeData>, ctx: CanvasRenderingContext2D) => {
+        const x = node.x ?? 0;
+        const y = node.y ?? 0;
+        const radius = Number(node.val ?? 0);
+
         ctx.beginPath();
-        ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
+        ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
         ctx.fillStyle = node.color;
         ctx.fill();
 
-        ctx.linkColor = lineColor;
-
         if (node.id === selectedNode?.id) {
             ctx.beginPath();
-            ctx.arc(node.x, node.y, node.val + 3, 0, 2 * Math.PI, false);
+            ctx.arc(x, y, radius + 3, 0, 2 * Math.PI, false);
             ctx.fillStyle = selectionColor;
             ctx.fill();
             //redraw original
             ctx.beginPath();
-            ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
+            ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
             ctx.fillStyle = node.color;
             ctx.fill();
             if (node.type !== 'index') {
                 ctx.font = '12px Arial';
                 ctx.fillStyle = textColor;
-                ctx.fillText(node.name, node.x, node.y);
+                ctx.fillText(node.name, x, y);
             }
         }
         if (node.type === 'index') {
             ctx.font = '12px Arial';
             ctx.fillStyle = textColor;
-            ctx.fillText(node.paperId, node.x, node.y);
+            ctx.fillText(node.paperId, x, y);
         }
     }, [selectedNode,
         props.updateChecker.indexIds,
@@ -236,17 +255,21 @@ export const ReferenceMapGraph = (props: {
     ]);
 
 
-    const handleNodeSelect = (node: NodeObject) => {
+    const handleNodeSelect = (node: NodeObject<LiteratureNodeData>) => {
         setSelectedNode(node);
     };
 
-    const toggleZoom = (node: NodeObject) => {
-        if (fgRef.current.zoom() < 1.0) {
-            fgRef.current.zoom(1.9, 200);
-            fgRef.current.centerAt(node.x, node.y, 200);
+    const toggleZoom = (node: NodeObject<LiteratureNodeData>) => {
+        const graph = fgRef.current;
+        if (!graph) return;
+        const x = node.x ?? 0;
+        const y = node.y ?? 0;
+        if (graph.zoom() < 1.0) {
+            graph.zoom(1.9, 200);
+            graph.centerAt(x, y, 200);
         } else {
-            fgRef.current.zoom(0.7, 200);
-            fgRef.current.centerAt(node.x, node.y, 200);
+            graph.zoom(0.7, 200);
+            graph.centerAt(x, y, 200);
         }
     }
 

@@ -580,6 +580,11 @@ body {
 	margin-right: 0;
 }
 
+.lf-slider-value {
+	min-width: 2.3em;
+	text-align: right;
+}
+
 .lf-setting-item-wrapper > div:last-child {
 	padding-bottom: 0;
 }

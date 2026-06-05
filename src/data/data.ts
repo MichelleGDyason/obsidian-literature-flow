@@ -1,8 +1,7 @@
 import { parse } from '@retorquere/bibtex-parser'
-import _ from 'lodash';
 import { CiteKey, IndexPaper, Library, LocalCache, RELOAD, Reload } from 'src/types';
 import { DEFAULT_LIBRARY, EXCLUDE_FILE_NAMES } from 'src/constants';
-import { getCanvasContent, getLinkedFiles, removeNullReferences } from 'src/utils/functions'
+import { getCanvasContent, getLinkedFiles, removeNullReferences, uniqueBy } from 'src/utils/functions'
 import { convertToCiteKeyEntry, fillMissingReference, indexSort, setCiteKeyId } from 'src/utils/postprocess';
 import { PromiseCapability } from 'src/promise';
 import { getZBib } from 'src/utils/zotero';
@@ -53,24 +52,20 @@ export class ReferenceMapData {
     }
 
     async reload(reloadType: Reload) {
-        const debug = this.plugin.settings.debugMode
         if (reloadType === RELOAD.HARD) {
             this.viewManager.clearCache()
             this.library.mtime = 0;
             await this.loadLibrary(false)
-            this.loadCache()
+            void this.loadCache()
             this.plugin.updateChecker.library = this.library;
-            this.plugin.view?.processReferences()
-            if (debug) console.log('LF: Reloaded View and library')
+            void this.plugin.view?.processReferences()
         } else if (reloadType === RELOAD.SOFT) {
             await this.loadLibrary(false)
             this.viewManager.clearCache()
             this.plugin.updateChecker.library = this.library;
-            this.plugin.view?.processReferences()
-            if (debug) console.log('LF: Reloaded library')
+            void this.plugin.view?.processReferences()
         } else if (reloadType === RELOAD.VIEW) {
-            this.plugin.view?.processReferences()
-            if (debug) console.log('LF: Reloaded View')
+            void this.plugin.view?.processReferences()
         }
     }
 
@@ -119,7 +114,7 @@ export class ReferenceMapData {
     }
 
     loadBibFileFromUserPath = async () => {
-        const { searchCiteKey, searchCiteKeyPath, debugMode } = this.plugin.settings;
+        const { searchCiteKey, searchCiteKeyPath } = this.plugin.settings;
         if (!searchCiteKey || !searchCiteKeyPath) return null;
         const libraryPath = normalizePath(searchCiteKeyPath);
         const adapter = this.plugin.app.vault.adapter;
@@ -129,12 +124,10 @@ export class ReferenceMapData {
             const mtime = stats.mtime;
             if (mtime === this.library.mtime) return null;
 
-            if (debugMode) console.log(`LF: Loading library from '${searchCiteKeyPath}'`);
             let rawData;
             try {
                 rawData = await adapter.read(libraryPath);
-            } catch (e) {
-                if (debugMode) console.warn('LF: Warnings associated with loading the library file.');
+            } catch {
                 return null;
             }
 
@@ -142,16 +135,16 @@ export class ReferenceMapData {
             const isBib = searchCiteKeyPath.endsWith('.bib');
             if (!isJson && !isBib) return null;
 
-            let libraryData;
+            let libraryData: CiteKeyEntry[];
             try {
                 if (isJson) {
                     libraryData = JSON.parse(rawData) as CiteKeyEntry[];
                 } else {
                     // the key property in Entry and id property in CiteKeyEntry are the same
-                    libraryData = (parse(rawData, { errorHandler: () => { } }).entries as unknown) as CiteKeyEntry[];
+                    const parsedEntries: unknown = parse(rawData, { errorHandler: () => { } }).entries;
+                    libraryData = parsedEntries as CiteKeyEntry[];
                 }
-            } catch (e) {
-                if (debugMode) console.warn('LF: Warnings associated with loading the library file.');
+            } catch {
                 return null;
             }
 
@@ -163,8 +156,7 @@ export class ReferenceMapData {
             };
             return libraryData;
         }
-        catch (e) {
-            if (debugMode) console.log('LF: Error loading library file.');
+        catch {
             return null;
         }
     }
@@ -196,7 +188,7 @@ export class ReferenceMapData {
             this.plugin.updateChecker.basename = activeFile.basename
             try {
                 fileCache = await vault.cachedRead(activeFile);
-            } catch (e) {
+            } catch {
                 fileCache = await vault.read(activeFile);
             }
             if (activeFile.extension === 'canvas') {
@@ -213,7 +205,9 @@ export class ReferenceMapData {
             }
             const fileMetadataCache = metadataCache.getFileCache(activeFile);
             const isLibrary = settings.searchCiteKey && this.library.libraryData !== null
-            if (isLibrary && settings.autoUpdateCitekeyFile) this.loadLibrary(false)
+            if (isLibrary && settings.autoUpdateCitekeyFile) {
+                void this.loadLibrary(false)
+            }
             this.plugin.updateChecker.setCache(fileCache, fileMetadataCache)
             const prefix = settings.findCiteKeyFromLinksWithoutPrefix ? '' : '@';
 
@@ -228,8 +222,8 @@ export class ReferenceMapData {
 
     getLocalReferences = async (citeKeyMap: CiteKey[] = []) => {
         const indexCards: IndexPaper[] = [];
-        if (_.isEmpty(citeKeyMap)) return indexCards;
-        _.map(citeKeyMap, (item: CiteKey): void => {
+        if (citeKeyMap.length === 0) return indexCards;
+        citeKeyMap.forEach((item: CiteKey): void => {
             const localPaper = this.library.libraryData?.find((entry) => entry.id === item.citeKey.replace('@', '')) as CiteKeyEntry;
             if (localPaper) {
                 const paper_ = fillMissingReference(localPaper);
@@ -258,7 +252,7 @@ export class ReferenceMapData {
         // Get references using the paper IDs
         if (indexIds.size > 0) {
             await Promise.all(
-                _.map([...indexIds], async (paperId) => {
+                [...indexIds].map(async (paperId) => {
                     const paper = await this.viewManager.getIndexPaper(paperId);
                     if (paper && paper.paperId) {
                         const paperCiteId =
@@ -282,7 +276,7 @@ export class ReferenceMapData {
         // Get references using the cite keys
         if (citeKeyMap.length > 0 && settings.searchCiteKey) {
             await Promise.all(
-                _.map(citeKeyMap, async (item, index): Promise<void> => {
+                citeKeyMap.map(async (item): Promise<void> => {
                     const localPaper = this.library.libraryData?.find((entry) => entry.id === item.citeKey.replace('@', ''));
                     if (localPaper) {
                         let isLocal = true;
@@ -314,7 +308,7 @@ export class ReferenceMapData {
                 fileName,
                 settings.searchLimit
             );
-            _.forEach(titleSearchPapers, (paper) => {
+            titleSearchPapers.forEach((paper) => {
                 indexCards.push({ id: paper.paperId, location: null, isLocal: false, paper });
             });
         }
@@ -323,7 +317,7 @@ export class ReferenceMapData {
         if (settings.searchFrontMatter && frontmatter) {
             const frontMatterPapers = await this.viewManager.searchIndexPapers(
                 frontmatter, settings.searchFrontMatterLimit);
-            _.forEach(frontMatterPapers, (paper) => {
+            frontMatterPapers.forEach((paper) => {
                 indexCards.push({ id: paper.paperId, location: null, isLocal: false, paper });
             });
         }
@@ -358,7 +352,7 @@ export class ReferenceMapData {
         let indexCardsTemp = removeNullReferences(indexCards);
 
         // This sorting has to be first because it is based on the location
-        // of the reference in the file. otherwise _.uniqBy will remove the
+        // of the reference in the file. Otherwise de-duplication will remove the
         // duplicate references with locations
 
         if (!this.plugin.settings.enableIndexSorting) {
@@ -369,7 +363,7 @@ export class ReferenceMapData {
             });
         }
 
-        indexCardsTemp = _.uniqBy(indexCardsTemp, item => item.paper.paperId);
+        indexCardsTemp = uniqueBy(indexCardsTemp, item => item.paper.paperId);
 
         if (this.plugin.settings.enableIndexSorting) {
             indexCardsTemp = indexSort(

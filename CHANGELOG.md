@@ -1,5 +1,21 @@
 # Literature Flow
 
+## 1.9.2 - 2026-06-06
+
+### Changed
+
+- Regenerate the lockfile for pnpm 11.5.1 and align GitHub Actions with the same version.
+- Upgrade the TypeScript, ESLint, Obsidian, Node type, and esbuild development toolchain.
+- Replace deprecated helper dependencies and the custom input suggester with native APIs.
+- Add official Obsidian plugin linting to local scripts and continuous integration.
+
+### Fixed
+
+- Resolve the source-code errors and cascading type warnings reported by the Obsidian plugin checker.
+- Remove unsafe DOM assignments, direct style mutations, forbidden lint directives, and unload-time leaf detachment.
+- Type Semantic Scholar responses, graph nodes, Canvas data, citeproc, Zotero responses, and asynchronous callbacks.
+- Update the esbuild watch configuration for current esbuild releases.
+
 ## 1.9.1 - 2026-06-06
 
 ### Changed

@@ -33,7 +33,7 @@ export async function getCSLLocale(
 
             result.setEncoding('utf8');
             result.on('data', (chunk) => (output += chunk));
-            result.on('error', (e) => rej(`Downloading locale: ${e}`));
+            result.on('error', (e) => rej(new Error(`Downloading locale: ${e.message}`)));
             result.on('close', () => {
                 rej(new Error('Error: cannot download locale'));
             });
@@ -79,16 +79,12 @@ export async function getCSLStyle(
 
             result.setEncoding('utf8');
             result.on('data', (chunk) => (output += chunk));
-            result.on('error', (e) => rej(`Error downloading CSL: ${e}`));
+            result.on('error', (e) => rej(new Error(`Error downloading CSL: ${e.message}`)));
             result.on('close', () => {
                 rej(new Error('Error: cannot download CSL'));
             });
             result.on('end', () => {
-                try {
-                    res(output);
-                } catch (e) {
-                    rej(e);
-                }
+                res(output);
             });
         });
     });

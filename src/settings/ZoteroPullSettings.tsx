@@ -23,7 +23,7 @@ function validateGroups(
     });
 
     plugin.settings.zoteroGroups = validated;
-    plugin.saveSettings();
+    void plugin.saveSettings();
     return true;
 }
 
@@ -57,7 +57,7 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceMap }) {
     }
 
     React.useEffect(() => {
-        pullUserGroups();
+        void pullUserGroups();
     }, []);
 
     return (
@@ -79,9 +79,9 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceMap }) {
                                         setActiveGroups([...activeGroups]);
                                     }
                                 }
-                                plugin.saveSettings().then(() => {
-                                    plugin.referenceMapData.reinit(true)
-                                    plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                void plugin.saveSettings().then(() => {
+                                    void plugin.referenceMapData.reinit(true)
+                                    void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                 });
                                 return !cur;
                             });
@@ -96,7 +96,9 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceMap }) {
                         name={t('CANNOT_CONNECT_TO_ZOTERO')}
                         description={t('CANNOT_CONNECT_TO_ZOTERO_DESC')}
                     >
-                        <button onClick={pullUserGroups} className="mod-cta">
+                        <button onClick={() => {
+                            void pullUserGroups();
+                        }} className="mod-cta">
                             Retry
                         </button>
                     </SettingItem>
@@ -114,8 +116,8 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceMap }) {
                             <input
                                 onChange={(e) => {
                                     plugin.settings.zoteroPort = e.target.value;
-                                    plugin.saveSettings();
-                                    plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                    void plugin.saveSettings();
+                                    void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                 }}
                                 type="text"
                                 spellCheck={false}
@@ -143,9 +145,9 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceMap }) {
                                                     plugin.settings.zoteroGroups = activeGroups;
                                                     setActiveGroups([...activeGroups]);
                                                 }
-                                                plugin.saveSettings().then(() => {
-                                                    plugin.referenceMapData.reinit(true)
-                                                    plugin.referenceMapData?.reload(RELOAD.SOFT)
+                                                void plugin.saveSettings().then(() => {
+                                                    void plugin.referenceMapData.reinit(true)
+                                                    void plugin.referenceMapData?.reload(RELOAD.SOFT)
                                                 });
                                             }}
                                             className={`checkbox-container${isEnabled ? ' is-enabled' : ''

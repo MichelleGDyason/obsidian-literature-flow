@@ -3,7 +3,7 @@ import { ViewManager } from 'src/data/viewManager';
 import { getPaperIds } from 'src/utils/parser';
 import ReferenceMap from 'src/main';
 import { Reference } from 'src/apis/s2agTypes';
-import { SEARCH_PROVIDER, SearchProvider } from 'src/types';
+import { SEARCH_PROVIDER, SEARCH_PROVIDER_LABEL, SearchProvider } from 'src/types';
 
 export class ReferenceSearchModal extends Modal {
     private isBusy = false;
@@ -94,7 +94,7 @@ export class ReferenceSearchModal extends Modal {
 
     submitEnterCallback(event: KeyboardEvent) {
         if (event.key === 'Enter' && !event.isComposing) {
-            this.searchReference();
+            void this.searchReference();
         }
     }
 
@@ -112,8 +112,8 @@ export class ReferenceSearchModal extends Modal {
                     : 'Semantic Scholar searches its full paper index.'
             )
             .addDropdown(dropdown => dropdown
-                .addOption(SEARCH_PROVIDER.SEMANTIC_SCHOLAR, 'Semantic Scholar')
-                .addOption(SEARCH_PROVIDER.OPENALEX, 'OpenAlex (open access only)')
+                .addOption(SEARCH_PROVIDER.SEMANTIC_SCHOLAR, SEARCH_PROVIDER_LABEL.SEMANTIC_SCHOLAR)
+                .addOption(SEARCH_PROVIDER.OPENALEX, `${SEARCH_PROVIDER_LABEL.OPENALEX} (open access only)`)
                 .setValue(this.provider)
                 .onChange(async (value) => {
                     this.provider = value as SearchProvider;
@@ -126,9 +126,11 @@ export class ReferenceSearchModal extends Modal {
         contentEl.createDiv({ cls: 'lf-search-modal-input' }, settingItem => {
             new TextComponent(settingItem)
                 .setValue(this.query)
-                .setPlaceholder('Search by keyword, title, authors, journal, abstract, ID, DOI, etc.')
+                .setPlaceholder('Search by keyword, title, authors, journal, abstract, ID, doi, etc.')
                 .onChange(value => (this.query = value))
-                .inputEl.addEventListener('keydown', this.submitEnterCallback.bind(this));
+                .inputEl.addEventListener('keydown', (event: KeyboardEvent) => {
+                    this.submitEnterCallback(event);
+                });
         });
 
         new Setting(contentEl)
@@ -138,7 +140,7 @@ export class ReferenceSearchModal extends Modal {
                     .setButtonText('Search')
                     .setCta()
                     .onClick(() => {
-                        this.searchReference();
+                        void this.searchReference();
                     }));
             });
     }

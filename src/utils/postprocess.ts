@@ -262,10 +262,16 @@ export const dataSearch = (data: Reference[], query: string) => {
             return item.authors?.some((author) => author.name?.toLowerCase().includes(query.toLowerCase())
             );
         } else {
-            return item[parameter as keyof typeof item]
-                ?.toString()
-                .toLowerCase()
-                .includes(query.toLowerCase());
+            const value = item[parameter as keyof typeof item];
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                return String(value).toLowerCase().includes(query.toLowerCase());
+            }
+            if (Array.isArray(value)) {
+                return value.some((entry) =>
+                    typeof entry === 'string' && entry.toLowerCase().includes(query.toLowerCase())
+                );
+            }
+            return false;
         }
     })
     );

@@ -51,7 +51,7 @@ export class SidebarView extends ItemView {
 									viewType === 'markdown' ||
 									viewType === 'empty'
 								) {
-									this.processReferences()
+									void this.processReferences()
 								}
 							}
 						})
@@ -60,13 +60,13 @@ export class SidebarView extends ItemView {
 			)
 		);
 
-		this.registerDomEvent(document, 'pointerup', (evt) => {
-			const selection = window.getSelection()?.toString().trim()
+		this.registerDomEvent(activeDocument, 'pointerup', () => {
+			const selection = activeWindow.getSelection()?.toString().trim()
 			EventBus.trigger(EVENTS.SELECTION, selection)
 		});
 
-		this.registerDomEvent(document, 'keyup', (evt) => {
-			const selection = window.getSelection()?.toString().trim()
+		this.registerDomEvent(activeDocument, 'keyup', () => {
+			const selection = activeWindow.getSelection()?.toString().trim()
 			EventBus.trigger(EVENTS.SELECTION, selection)
 		});
 	}
@@ -84,7 +84,7 @@ export class SidebarView extends ItemView {
 	}
 
 	async onOpen() {
-		this.processReferences()
+		void this.processReferences()
 	}
 
 	async onClose() {

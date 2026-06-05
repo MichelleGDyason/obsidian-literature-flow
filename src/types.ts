@@ -6,6 +6,11 @@ export const SEARCH_PROVIDER = {
 	OPENALEX: 'openalex',
 } as const
 
+export const SEARCH_PROVIDER_LABEL = {
+	SEMANTIC_SCHOLAR: 'Semantic Scholar',
+	OPENALEX: 'OpenAlex',
+} as const
+
 export type SearchProvider = typeof SEARCH_PROVIDER[keyof typeof SEARCH_PROVIDER]
 
 export type ReferenceMapSettings = {
@@ -122,6 +127,8 @@ export type PartialCSLEntry = {
 	id: string;
 	title: string;
 	groupID?: number;
+	citekey?: string;
+	'citation-key'?: string;
 }
 
 export type ZoteroGroup = {

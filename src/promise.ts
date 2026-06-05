@@ -2,8 +2,7 @@ export class PromiseCapability<T> {
     settled = false;
     promise: Promise<T>;
     resolve!: (data: T) => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    reject!: (reason?: any) => void;
+    reject!: (reason?: Error) => void;
 
     constructor() {
         this.promise = new Promise((resolve, reject) => {
@@ -13,7 +12,7 @@ export class PromiseCapability<T> {
             };
 
             this.reject = (reason) => {
-                reject(reason);
+                reject(reason ?? new Error('Promise rejected'));
                 this.settled = true;
             };
         });

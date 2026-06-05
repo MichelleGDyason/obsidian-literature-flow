@@ -52,31 +52,37 @@ export const PaperButtons = ({
 	let copyMetadataTwo = ''
 	let copyMetadataThree = ''
 	if (settings.formatMetadataCopyOne) {
-		settings.metadataCopyOneBatch && batchCopyMetadataOne
-			? (copyMetadataOne = batchCopyMetadataOne)
-			: (copyMetadataOne = templateReplace(
+		if (settings.metadataCopyOneBatch && batchCopyMetadataOne) {
+			copyMetadataOne = batchCopyMetadataOne
+		} else {
+			copyMetadataOne = templateReplace(
 				metadataTemplateOne,
 				metaData,
 				paper.id
-			))
+			)
+		}
 	}
 	if (settings.formatMetadataCopyTwo) {
-		settings.metadataCopyTwoBatch && batchCopyMetadataTwo
-			? (copyMetadataTwo = batchCopyMetadataTwo)
-			: (copyMetadataTwo = templateReplace(
+		if (settings.metadataCopyTwoBatch && batchCopyMetadataTwo) {
+			copyMetadataTwo = batchCopyMetadataTwo
+		} else {
+			copyMetadataTwo = templateReplace(
 				metadataTemplateTwo,
 				metaData,
 				paper.id
-			))
+			)
+		}
 	}
 	if (settings.formatMetadataCopyThree) {
-		settings.metadataCopyThreeBatch && batchCopyMetadataThree
-			? (copyMetadataThree = batchCopyMetadataThree)
-			: (copyMetadataThree = templateReplace(
+		if (settings.metadataCopyThreeBatch && batchCopyMetadataThree) {
+			copyMetadataThree = batchCopyMetadataThree
+		} else {
+			copyMetadataThree = templateReplace(
 				metadataTemplateThree,
 				metaData,
 				paper.id
-			))
+			)
+		}
 	}
 
 	let citingCited = null
@@ -103,8 +109,7 @@ export const PaperButtons = ({
 		}
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const renderButton = (showCondition: boolean, clickHandler: any, count: number, className: string, isEnabled: boolean) => (
+	const renderButton = (showCondition: boolean, clickHandler: () => void, count: number, className: string, isEnabled: boolean) => (
 		<div
 			className={isEnabled ? className : 'lf-button-disabled'}
 			style={
@@ -115,7 +120,7 @@ export const PaperButtons = ({
 					}
 					: {}
 			}
-			onClick={isEnabled ? clickHandler : null}
+			onClick={isEnabled ? clickHandler : undefined}
 		>
 			{count}
 		</div>

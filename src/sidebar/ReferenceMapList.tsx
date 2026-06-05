@@ -21,10 +21,16 @@ export const indexSearch = (data: IndexPaper[], query: string) => {
 			return item.paper?.authors?.some((author) => author.name?.toLowerCase().includes(query.toLowerCase())
 			);
 		} else {
-			return item.paper[parameter as keyof typeof item.paper]
-				?.toString()
-				.toLowerCase()
-				.includes(query.toLowerCase());
+			const value = item.paper[parameter as keyof typeof item.paper];
+			if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+				return String(value).toLowerCase().includes(query.toLowerCase());
+			}
+			if (Array.isArray(value)) {
+				return value.some((entry) =>
+					typeof entry === 'string' && entry.toLowerCase().includes(query.toLowerCase())
+				);
+			}
+			return false;
 		}
 	})
 	);
@@ -43,7 +49,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ isSearchList, setQuery, papers 
 						</div>
 					}
 					{papers && papers?.length > 0 && isCSL &&
-						<div className='lf-plugin-global-copy' onClick={async () => {
+						<div className='lf-plugin-global-copy' onClick={() => {
 							if (!papers) return;
 							const bib = papers.map((paper) => paper.paper.csl)
 							copyToClipboard(bib?.join('\n\n'))
@@ -112,11 +118,11 @@ export const ReferenceMapList = (props: {
 	}
 
 	useEffect(() => {
-		getLocalData()
+		void getLocalData()
 	}, [props.updateChecker.basename])
 
 	useEffect(() => {
-		fetchData()
+		void fetchData()
 		EventBus.on(EVENTS.UPDATE, fetchData);
 	}, [
 		props.updateChecker.indexIds,
@@ -133,7 +139,9 @@ export const ReferenceMapList = (props: {
 				behavior: 'smooth',
 				inline: 'start'
 			})
-		EventBus.on(EVENTS.SELECTION, (sel) => setSelection(sel))
+			EventBus.on(EVENTS.SELECTION, (sel) => {
+				if (typeof sel === 'string') setSelection(sel)
+			})
 	}, [selection])
 
 

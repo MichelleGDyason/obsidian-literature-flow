@@ -28,8 +28,8 @@ export const IndexPaperCard = (props: IndexCardsProps) => {
 
 	useEffect(() => {
 		if (props.indexPaper.paper.paperId && !props.indexPaper.isLocal) {
-			getCitations()
-			getReferences()
+			void getCitations()
+			void getReferences()
 		}
 	}, [props.indexPaper.isLocal])
 

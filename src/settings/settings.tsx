@@ -2,13 +2,15 @@ import React from 'react';
 import { App, debounce, normalizePath } from 'obsidian';
 import { createRoot } from 'react-dom/client'
 import { PluginSettingTab, Setting } from 'obsidian'
-import { RELOAD, SEARCH_PROVIDER, SearchProvider } from '../types'
+import { RELOAD, SEARCH_PROVIDER, SEARCH_PROVIDER_LABEL, SearchProvider } from '../types'
 import ReferenceMap from '../main'
 import { t } from '../lang/helpers'
 import { ZoteroPullSetting } from './ZoteroPullSettings'
 import { fragWithHTML } from '../utils/functions'
 import { ButtonSettings } from './ButtonSettings';
 import { CSLListSuggest, CSLLocaleSuggest, FolderSuggest } from './list-suggest';
+
+const CSL_LABEL = 'CSL'
 
 export class ReferenceMapSettingTab extends PluginSettingTab {
 	plugin: ReferenceMap
@@ -22,10 +24,10 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 		super(app, plugin)
 		this.plugin = plugin
 
-		this.citationPathLoadingEl = document.createElement('div');
-		this.citationPathErrorEl = document.createElement('div');
-		this.citationPathSuccessEl = document.createElement('div');
-		this.warningEl = document.createElement('div');
+		this.citationPathLoadingEl = activeDocument.createElement('div');
+		this.citationPathErrorEl = activeDocument.createElement('div');
+		this.citationPathSuccessEl = activeDocument.createElement('div');
+		this.warningEl = activeDocument.createElement('div');
 		this.warningEl.addClass('lf-Warning')
 	}
 
@@ -35,7 +37,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 			try {
 				await this.app.vault.adapter.read(normalizePath(filePath))
 				this.citationPathErrorEl.addClass('d-none')
-			} catch (e) {
+			} catch {
 				this.citationPathSuccessEl.addClass('d-none')
 				this.citationPathErrorEl.removeClass('d-none')
 				return false
@@ -52,7 +54,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 		if (!this.plugin.view?.referenceMapData.library.active) return
 
 		this.citationPathSuccessEl.setText(
-			`Successfully Loaded Library Containing References.`
+			'Successfully loaded library containing references.'
 		)
 		this.citationPathSuccessEl.removeClass('d-none')
 	}
@@ -61,7 +63,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 		const { containerEl } = this
 		containerEl.empty()
 
-		containerEl.createEl('h2', { text: t('GENERAL_SETTINGS') })
+		new Setting(containerEl).setName(t('GENERAL_SETTINGS')).setHeading()
 
 		new Setting(containerEl)
 			.setName(t('HIDE_SHOW_ABSTRACT'))
@@ -71,9 +73,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.showAbstract)
 					.onChange(async (value) => {
 						this.plugin.settings.showAbstract = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 						this.display()
 					})
@@ -88,20 +90,19 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setLimits(0, 1000, 20)
 						.setValue(this.plugin.settings.abstractTruncateLength)
 						.onChange(async (value) => {
-							truncateLength.innerText = ` ${value.toString()}`
+							truncateLength.setText(value.toString())
 							this.plugin.settings.abstractTruncateLength = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
-				.settingEl.createDiv('', (el) => {
-					truncateLength = el
-					el.style.minWidth = '2.3em'
-					el.style.textAlign = 'right'
-					el.innerText = ` ${this.plugin.settings.abstractTruncateLength.toString()}`
-				})
+					.settingEl.createDiv('', (el) => {
+						truncateLength = el
+						el.addClass('lf-slider-value')
+						el.setText(this.plugin.settings.abstractTruncateLength.toString())
+					})
 
 		}
 		new Setting(containerEl)
@@ -112,9 +113,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.showAuthors)
 					.onChange(async (value) => {
 						this.plugin.settings.showAuthors = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 					})
 			)
@@ -127,9 +128,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.showJournal)
 					.onChange(async (value) => {
 						this.plugin.settings.showJournal = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 					})
 			)
@@ -142,9 +143,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.influentialCount)
 					.onChange(async (value) => {
 						this.plugin.settings.influentialCount = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 					})
 			)
@@ -157,9 +158,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.hideButtonsOnHover)
 					.onChange(async (value) => {
 						this.plugin.settings.hideButtonsOnHover = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 					})
 			)
@@ -172,9 +173,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.lookupLinkedFiles)
 					.onChange(async (value) => {
 						this.plugin.settings.lookupLinkedFiles = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 					})
 			)
@@ -187,9 +188,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.enableIndexSorting)
 					.onChange(async (value) => {
 						this.plugin.settings.enableIndexSorting = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 						this.display()
 					})
@@ -214,9 +215,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.sortByIndex)
 						.onChange(async (value) => {
 							this.plugin.settings.sortByIndex = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -230,9 +231,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.sortOrderIndex)
 						.onChange(async (value) => {
 							this.plugin.settings.sortOrderIndex = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -246,9 +247,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.enableReferenceSorting)
 					.onChange(async (value) => {
 						this.plugin.settings.enableReferenceSorting = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 						this.display()
 					})
@@ -273,9 +274,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.sortByReference)
 						.onChange(async (value) => {
 							this.plugin.settings.sortByReference = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -289,9 +290,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.sortOrderReference)
 						.onChange(async (value) => {
 							this.plugin.settings.sortOrderReference = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -301,45 +302,43 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 			.setName("Citation style ")
 			.addSearch((cb) => {
 				new CSLListSuggest(this.app, cb.inputEl);
-				cb.setPlaceholder("CSL Style: style-name")
+				cb.setPlaceholder(`${CSL_LABEL} style: style-name`)
 					.setValue(this.plugin.settings.cslStyle)
 					.onChange(
 						debounce((style) => {
 							this.plugin.settings.cslStyle = style;
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view) {
-									this.plugin.referenceMapData.loadCache()
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.loadCache()
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 								}
 							})
 						}, 300)
 					);
-				// @ts-ignore
-				cb.containerEl.addClass("lf-csl-search");
+					cb.inputEl.addClass("lf-csl-search");
 			});
 
 		new Setting(this.containerEl)
 			.setName("Citation language")
 			.addSearch((cb) => {
 				new CSLLocaleSuggest(this.app, cb.inputEl);
-				cb.setPlaceholder("CSL Style Locale: locale-name")
+				cb.setPlaceholder(`${CSL_LABEL} style locale: locale-name`)
 					.setValue(this.plugin.settings.cslLocale)
 					.onChange(
 						debounce((style) => {
 							this.plugin.settings.cslLocale = style;
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view) {
-									this.plugin.referenceMapData.loadCache()
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.loadCache()
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 								}
 							})
 						}, 300)
 					);
-				// @ts-ignore
-				cb.containerEl.addClass("lf-csl-search");
-			});
+					cb.inputEl.addClass("lf-csl-search");
+				});
 
-		containerEl.createEl('h2', { text: 'Static List Settings' })
+			new Setting(containerEl).setName('Static list').setHeading()
 		new Setting(containerEl)
 			.setName(fragWithHTML(t('SEARCH_CITEKEY')))
 			.setDesc(fragWithHTML(t('SEARCH_CITEKEY_DESC')))
@@ -348,9 +347,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.searchCiteKey)
 					.onChange(async (value) => {
 						this.plugin.settings.searchCiteKey = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.HARD)
+								void this.plugin.referenceMapData.reload(RELOAD.HARD)
 						})
 						this.display()
 					})
@@ -364,13 +363,13 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					text.setValue(
 						this.plugin.settings.searchCiteKeyPath
 					).onChange(async (value) => {
-						this.checkCitationExportPath(value).then((success) => {
+						void this.checkCitationExportPath(value).then((success) => {
 							if (success) {
 								this.showCitationExportPathSuccess()
 								this.plugin.settings.searchCiteKeyPath = value
-								this.plugin.saveSettings().then(() => {
+								void this.plugin.saveSettings().then(() => {
 									if (this.plugin.view)
-										this.plugin.referenceMapData.reload(RELOAD.SOFT)
+										void this.plugin.referenceMapData.reload(RELOAD.SOFT)
 								})
 							}
 						})
@@ -388,7 +387,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 			})
 			this.citationPathSuccessEl = containerEl.createEl('p', {
 				cls: 'lf-PathSuccess d-none',
-				text: 'Successfully Loaded Library Containing References.',
+				text: 'Successfully loaded library containing references.',
 			})
 
 			new Setting(containerEl)
@@ -403,9 +402,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.onChange(async (value) => {
 							this.plugin.settings.autoUpdateCitekeyFile =
 								value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -425,9 +424,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.linkCiteKey)
 						.onChange(async (value) => {
 							this.plugin.settings.linkCiteKey = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -439,9 +438,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.findZoteroCiteKeyFromID)
 						.onChange(async (value) => {
 							this.plugin.settings.findZoteroCiteKeyFromID = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -457,16 +456,16 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.onChange(async (value) => {
 							this.plugin.settings.findCiteKeyFromLinksWithoutPrefix =
 								value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
 		}
 
 
-		containerEl.createEl('h2', { text: 'Buttons Settings' })
+			new Setting(containerEl).setName('Buttons').setHeading()
 
 		containerEl.createDiv('setting-item lf-setting-item-wrapper', (el) => {
 			createRoot(el).render(
@@ -474,14 +473,14 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 			);
 		})
 
-			containerEl.createEl('h2', { text: 'Search Settings' })
+				new Setting(containerEl).setName('Search').setHeading()
 			new Setting(containerEl)
 				.setName('Online search source')
-				.setDesc('Choose the provider used by Search Online and Insert/Create. Sidebar citation graphs continue to use Semantic Scholar.')
+				.setDesc(`Choose the provider used by search online and insert/create. Sidebar citation graphs continue to use ${SEARCH_PROVIDER_LABEL.SEMANTIC_SCHOLAR}.`)
 				.addDropdown((dropdown) =>
 					dropdown
-						.addOption(SEARCH_PROVIDER.SEMANTIC_SCHOLAR, 'Semantic Scholar')
-						.addOption(SEARCH_PROVIDER.OPENALEX, 'OpenAlex (open access only)')
+						.addOption(SEARCH_PROVIDER.SEMANTIC_SCHOLAR, SEARCH_PROVIDER_LABEL.SEMANTIC_SCHOLAR)
+						.addOption(SEARCH_PROVIDER.OPENALEX, `${SEARCH_PROVIDER_LABEL.OPENALEX} (open access only)`)
 						.setValue(this.plugin.settings.modalSearchProvider)
 						.onChange(async (value) => {
 							this.plugin.settings.modalSearchProvider = value as SearchProvider
@@ -492,12 +491,12 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 
 			if (this.plugin.settings.modalSearchProvider === SEARCH_PROVIDER.OPENALEX) {
 				new Setting(containerEl)
-					.setName('OpenAlex API key')
+					.setName(`${SEARCH_PROVIDER_LABEL.OPENALEX} API key`)
 					.setDesc(fragWithHTML('Optional but recommended. Without a key OpenAlex allows 100 credits per day; a free key raises this to 100,000. Create one at <a href="https://openalex.org/settings/api">openalex.org/settings/api</a>.'))
 					.addText((text) => {
 						text.inputEl.type = 'password'
 						text
-							.setPlaceholder('OpenAlex API key')
+							.setPlaceholder(`${SEARCH_PROVIDER_LABEL.OPENALEX} API key`)
 							.setValue(this.plugin.settings.openAlexApiKey)
 							.onChange(async (value) => {
 								this.plugin.settings.openAlexApiKey = value.trim()
@@ -515,19 +514,18 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setLimits(1, 100, 1)
 					.setValue(this.plugin.settings.modalSearchLimit)
 					.onChange(async (value) => {
-						zoomText.innerText = ` ${value.toString()}`
+						zoomText.setText(value.toString())
 						this.plugin.settings.modalSearchLimit = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 					})
 			)
 			.settingEl.createDiv('', (el) => {
 				zoomText = el
-				el.style.minWidth = '2.3em'
-				el.style.textAlign = 'right'
-				el.innerText = ` ${this.plugin.settings.modalSearchLimit.toString()}`
+				el.addClass('lf-slider-value')
+				el.setText(this.plugin.settings.modalSearchLimit.toString())
 			})
 
 		new Setting(containerEl)
@@ -535,15 +533,14 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 			.setDesc(fragWithHTML(t('MODAL_SEARCH_CREATE_FOLDER_DESC')))
 			.addSearch((cb) => {
 				new FolderSuggest(this.app, cb.inputEl);
-				cb.setPlaceholder("Folder Name: folder/subfolder")
+				cb.setPlaceholder("Folder name: folder/subfolder")
 					.setValue(this.plugin.settings.folder)
 					.onChange((folder) => {
 						this.plugin.settings.folder = folder;
-						this.plugin.saveSettings()
+						void this.plugin.saveSettings()
 					});
-				// @ts-ignore
-				cb.containerEl.addClass("lf-csl-search");
-			});
+					cb.inputEl.addClass("lf-csl-search");
+				});
 
 		new Setting(containerEl)
 			.setName(fragWithHTML(t('MODAL_SEARCH_CREATE_FILE_FORMAT')))
@@ -553,7 +550,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.fileNameFormat)
 					.onChange(async (value) => {
 						this.plugin.settings.fileNameFormat = value
-						this.plugin.saveSettings()
+						void this.plugin.saveSettings()
 					})
 			)
 		new Setting(containerEl)
@@ -565,7 +562,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.modalCreateTemplate)
 					.onChange(async (value) => {
 						this.plugin.settings.modalCreateTemplate = value
-						this.plugin.saveSettings()
+						void this.plugin.saveSettings()
 					})
 			}
 			)
@@ -579,11 +576,11 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.modalInsertTemplate)
 					.onChange(async (value) => {
 						this.plugin.settings.modalInsertTemplate = value
-						this.plugin.saveSettings()
+						void this.plugin.saveSettings()
 					})
 			})
 
-		containerEl.createEl('h2', { text: 'Misc' })
+			new Setting(containerEl).setName('Miscellaneous').setHeading()
 
 		let citedMaxLimit: HTMLDivElement
 		new Setting(containerEl)
@@ -595,24 +592,23 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setLimits(50, 1000, 50)
 					.setValue(this.plugin.settings.citedLimit)
 					.onChange(async (value) => {
-						citedMaxLimit.innerText = ` ${value.toString()}`
+						citedMaxLimit.setText(value.toString())
 						this.plugin.settings.citedLimit = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.SOFT)
+								void this.plugin.referenceMapData.reload(RELOAD.SOFT)
 						})
 					})
 			)
-			.settingEl.createDiv('', (el) => {
-				citedMaxLimit = el
-				el.style.minWidth = '2.3em'
-				el.style.textAlign = 'right'
-				el.innerText = ` ${this.plugin.settings.citedLimit.toString()}`
-			})
+				.settingEl.createDiv('', (el) => {
+					citedMaxLimit = el
+					el.addClass('lf-slider-value')
+					el.setText(this.plugin.settings.citedLimit.toString())
+				})
 
 		this.warningEl = containerEl.createEl('p', {
 			cls: 'lf-Warning',
-			text: 'WARNING: Increasing this value may substantially slowdown rendering and therefore performance of Obsidian itself for documents containing large number of citations.'
+			text: 'Warning: Increasing this value may substantially slowdown rendering and therefore performance of Obsidian itself for documents containing large number of citations.'
 		})
 
 		let citingMaxLimit: HTMLDivElement
@@ -624,24 +620,23 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setLimits(50, 1000, 50)
 					.setValue(this.plugin.settings.citingLimit)
 					.onChange(async (value) => {
-						citingMaxLimit.innerText = ` ${value.toString()}`
+						citingMaxLimit.setText(value.toString())
 						this.plugin.settings.citingLimit = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.SOFT)
+								void this.plugin.referenceMapData.reload(RELOAD.SOFT)
 						})
 					})
 			)
-			.settingEl.createDiv('', (el) => {
-				citingMaxLimit = el
-				el.style.minWidth = '2.3em'
-				el.style.textAlign = 'right'
-				el.innerText = ` ${this.plugin.settings.citingLimit.toString()}`
-			})
+				.settingEl.createDiv('', (el) => {
+					citingMaxLimit = el
+					el.addClass('lf-slider-value')
+					el.setText(this.plugin.settings.citingLimit.toString())
+				})
 
 		this.warningEl = containerEl.createEl('p', {
 			cls: 'lf-Warning',
-			text: 'WARNING: Increasing this value may substantially slowdown rendering and therefore performance of Obsidian itself for documents containing large number of citations.'
+			text: 'Warning: Increasing this value may substantially slowdown rendering and therefore performance of Obsidian itself for documents containing large number of citations.'
 		})
 		new Setting(containerEl)
 			.setName(t('HIDE_SHOW_REDUNDANT_REFERENCES'))
@@ -651,9 +646,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.filterRedundantReferences)
 					.onChange(async (value) => {
 						this.plugin.settings.filterRedundantReferences = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 					})
 			)
@@ -666,9 +661,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.searchTitle)
 					.onChange(async (value) => {
 						this.plugin.settings.searchTitle = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 						this.display()
 					})
@@ -684,20 +679,19 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setLimits(1, 10, 1)
 						.setValue(this.plugin.settings.searchLimit)
 						.onChange(async (value) => {
-							zoomText2.innerText = ` ${value.toString()}`
+							zoomText2.setText(value.toString())
 							this.plugin.settings.searchLimit = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
-				.settingEl.createDiv('', (el) => {
-					zoomText2 = el
-					el.style.minWidth = '2.3em'
-					el.style.textAlign = 'right'
-					el.innerText = ` ${this.plugin.settings.searchLimit.toString()}`
-				})
+					.settingEl.createDiv('', (el) => {
+						zoomText2 = el
+						el.addClass('lf-slider-value')
+						el.setText(this.plugin.settings.searchLimit.toString())
+					})
 		}
 
 		new Setting(containerEl)
@@ -708,9 +702,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.searchFrontMatter)
 					.onChange(async (value) => {
 						this.plugin.settings.searchFrontMatter = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 						})
 						this.display()
 					})
@@ -726,9 +720,9 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.searchFrontMatterKey)
 						.onChange(async (value) => {
 							this.plugin.settings.searchFrontMatterKey = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
@@ -740,20 +734,19 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						.setLimits(1, 10, 1)
 						.setValue(this.plugin.settings.searchFrontMatterLimit)
 						.onChange(async (value) => {
-							zoomText3.innerText = ` ${value.toString()}`
+							zoomText3.setText(value.toString())
 							this.plugin.settings.searchFrontMatterLimit = value
-							this.plugin.saveSettings().then(() => {
+							void this.plugin.saveSettings().then(() => {
 								if (this.plugin.view)
-									this.plugin.referenceMapData.reload(RELOAD.VIEW)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
 							})
 						})
 				)
-				.settingEl.createDiv('', (el) => {
-					zoomText3 = el
-					el.style.minWidth = '2.3em'
-					el.style.textAlign = 'right'
-					el.innerText = ` ${this.plugin.settings.searchFrontMatterLimit.toString()}`
-				})
+					.settingEl.createDiv('', (el) => {
+						zoomText3 = el
+						el.addClass('lf-slider-value')
+						el.setText(this.plugin.settings.searchFrontMatterLimit.toString())
+					})
 		}
 
 		new Setting(containerEl)
@@ -764,14 +757,14 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.debugMode)
 					.onChange(async (value) => {
 						this.plugin.settings.debugMode = value
-						this.plugin.saveSettings().then(() => {
+						void this.plugin.saveSettings().then(() => {
 							if (this.plugin.view)
-								this.plugin.referenceMapData.reload(RELOAD.SOFT)
+								void this.plugin.referenceMapData.reload(RELOAD.SOFT)
 						})
 					})
 			)
-		containerEl.createEl('hr')
-		containerEl.createEl('h2', { text: t('SEE_DOCUMENTATION') })
+			containerEl.createEl('hr')
+			new Setting(containerEl).setName(t('SEE_DOCUMENTATION')).setHeading()
 		containerEl.createEl('p', {
 			text: fragWithHTML(t('SEE_DOCUMENTATION_DESC')),
 		})

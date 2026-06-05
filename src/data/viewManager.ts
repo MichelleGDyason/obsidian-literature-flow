@@ -59,15 +59,11 @@ export class ViewManager {
 			return cachedBatch
 		}
 
-		const debugMode = this.plugin.settings.debugMode
 		try {
-			const batchPapers = await getBatchItems(paperIds, debugMode)
+			const batchPapers = await getBatchItems(paperIds)
 			this.batchCache.set(paperIds.join(','), batchPapers)
 			return batchPapers
-		} catch (e) {
-			if (debugMode) {
-				console.log('LF: S2AG API Batch request error', e)
-			}
+		} catch {
 			return []
 		}
 	}
@@ -78,15 +74,11 @@ export class ViewManager {
 			return this.indexCache.get(paperId)
 		}
 
-		const debugMode = this.plugin.settings.debugMode
 		try {
-			const paper = await getIndexItem(paperId, debugMode)
+			const paper = await getIndexItem(paperId)
 			this.indexCache.set(paperId, paper)
 			return paper
-		} catch (e) {
-			if (debugMode) {
-				console.log(`LF: S2AG API index card request error with status ${e}. Fallback library is used to show metadata. Check your internet connection, Validity of DOI/URL in the local library`)
-			}
+		} catch {
 			if (cacheError) this.indexCache.set(paperId, null)
 			return null
 		}
@@ -99,17 +91,13 @@ export class ViewManager {
 			return cachedSearch
 		}
 
-		const debugMode = this.plugin.settings.debugMode
 		try {
-			const indexCardsList = await getSearchItems(query, limit, debugMode)
+			const indexCardsList = await getSearchItems(query, limit)
 			if (cache) {
 				this.searchCache.set(cacheKey, indexCardsList)
 			}
 			return indexCardsList
-		} catch (e) {
-			if (debugMode) {
-				console.log(`LF: S2AG API index card request error with status ${e}`)
-			}
+		} catch {
 			return []
 		}
 	}
@@ -119,15 +107,11 @@ export class ViewManager {
 			return this.refCache.get(paperId) ?? []
 		}
 
-		const debugMode = this.plugin.settings.debugMode
 		try {
-			const references = await getReferenceItems(paperId, this.plugin.settings.citedLimit, debugMode)
+			const references = await getReferenceItems(paperId, this.plugin.settings.citedLimit)
 			this.refCache.set(paperId, references)
 			return references
-		} catch (e) {
-			if (debugMode) {
-				console.log(`LF: S2AG API reference card request error with status ${e}`)
-			}
+		} catch {
 			return []
 		}
 	}
@@ -136,15 +120,11 @@ export class ViewManager {
 		if (this.citeCache.has(paperId)) {
 			return this.citeCache.get(paperId) ?? []
 		}
-		const debugMode = this.plugin.settings.debugMode
 		try {
-			const citations = await getCitationItems(paperId, this.plugin.settings.citingLimit, debugMode)
+			const citations = await getCitationItems(paperId, this.plugin.settings.citingLimit)
 			this.citeCache.set(paperId, citations)
 			return citations
-		} catch (e) {
-			if (debugMode) {
-				console.log(`LF: S2AG API citation card request error with status ${e}`)
-			}
+		} catch {
 			return []
 		}
 	}

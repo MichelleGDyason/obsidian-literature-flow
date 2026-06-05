@@ -34,12 +34,12 @@ export default class ReferenceMap extends Plugin {
 		this.cacheDir = normalizePath(`${pluginDir}/cache`);
 		this.referenceMapData = new ReferenceMapData(this)
 		this.updateChecker = new UpdateChecker()
-		this.loadSettings().then(() => {
-			this.init()
-			this.initPromise.promise
+		void this.loadSettings().then(() => {
+			void this.init()
+			void this.initPromise.promise
 				.then(() => {
-					this.referenceMapData.loadLibrary(true);
-					this.referenceMapData.loadCache()
+					void this.referenceMapData.loadLibrary(true);
+					void this.referenceMapData.loadCache()
 				})
 				.finally(() => {
 					this.updateChecker.library = this.referenceMapData.library;
@@ -66,44 +66,44 @@ export default class ReferenceMap extends Plugin {
 			(leaf: WorkspaceLeaf) => new GraphView(leaf, this)
 		)
 
-		this.addCommand({
-			id: 'show-literature-flow-sidebar-view',
-			name: 'Show Sidebar View',
+			this.addCommand({
+				id: 'show-sidebar-view',
+			name: 'Show sidebar view',
 			callback: () => {
 				this.ensureLeafExists(true)
 			},
 		})
-		this.addCommand({
-			id: 'reload-literature-flow-library',
-			name: 'Refresh View and Library',
+			this.addCommand({
+				id: 'reload-library',
+			name: 'Refresh view and library',
 			callback: () => {
 				if (this.view) {
-					this.referenceMapData.reload(RELOAD.HARD)
+					void this.referenceMapData.reload(RELOAD.HARD)
 				}
 			},
 		})
 
-		this.addCommand({
-			id: 'open-literature-flow-search-modal-to-insert',
-			name: 'Search Online and Insert',
+			this.addCommand({
+				id: 'search-online-insert',
+			name: 'Search online and insert',
 			callback: () => this.insertMetadata(),
 		});
 
-		this.addCommand({
-			id: 'open-literature-flow-search-modal-to-create',
-			name: 'Search Online and Create',
+			this.addCommand({
+				id: 'search-online-create',
+			name: 'Search online and create',
 			callback: () => this.createNewReferenceNote(),
 		});
 
-		this.addCommand({
-			id: "open-literature-flow-graph",
-			name: "Open Literature Graph",
+			this.addCommand({
+				id: "open-literature-graph",
+			name: "Open literature graph",
 			callback: () => this.openReferenceMapGraph(false),
 		});
 
 		this.addCommand({
 			id: "convert-selection-zotero-link",
-			name: "Convert Selection to Zotero Link",
+			name: "Convert selection to Zotero link",
 			callback: () => this.convertSelectionToZoteroLink(),
 		});
 
@@ -114,15 +114,11 @@ export default class ReferenceMap extends Plugin {
 
 		this.addRibbonIcon(
 			'LiteratureFlowIconScroll',
-			'Literature Flow',
+			this.manifest.name,
 			async (evt: MouseEvent) => {
 				this.ensureLeafExists(true)
 			}
 		)
-	}
-
-	onunload() {
-		this.app.workspace.detachLeavesOfType(REFERENCE_MAP_GRAPH_VIEW_TYPE);
 	}
 
 	ensureLeafExists(active = false): void {
@@ -130,24 +126,25 @@ export default class ReferenceMap extends Plugin {
 
 		const preferredSidebar = DIRECTION.RIGHT
 
-		let leaf: WorkspaceLeaf
+			let leaf: WorkspaceLeaf | null
 		const existingPluginLeaves = workspace.getLeavesOfType(
 			REFERENCE_MAP_VIEW_TYPE
 		)
 
 		if (existingPluginLeaves.length > 0) {
 			leaf = existingPluginLeaves[0]
-		} else {
-			leaf =
+			} else {
+				leaf =
 				(preferredSidebar as Direction) === DIRECTION.LEFT
 					? workspace.getLeftLeaf(false)
 					: workspace.getRightLeaf(false)
-			workspace.revealLeaf(leaf)
-			leaf.setViewState({ type: REFERENCE_MAP_VIEW_TYPE })
-		}
+				if (!leaf) return
+				void workspace.revealLeaf(leaf)
+				void leaf.setViewState({ type: REFERENCE_MAP_VIEW_TYPE })
+			}
 
-		if (active) {
-			workspace.setActiveLeaf(leaf)
+			if (active && leaf) {
+				workspace.setActiveLeaf(leaf)
 		}
 	}
 
@@ -155,12 +152,14 @@ export default class ReferenceMap extends Plugin {
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(REFERENCE_MAP_VIEW_TYPE)
 
-		await this.app.workspace.getRightLeaf(false).setViewState({
+		const leaf = this.app.workspace.getRightLeaf(false)
+		if (!leaf) return
+		await leaf.setViewState({
 			type: REFERENCE_MAP_VIEW_TYPE,
 			active: false,
 		})
 
-		this.app.workspace.revealLeaf(
+		void this.app.workspace.revealLeaf(
 			this.app.workspace.getLeavesOfType(REFERENCE_MAP_VIEW_TYPE)[0]
 		)
 	}
@@ -173,11 +172,8 @@ export default class ReferenceMap extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		)
+		const savedSettings = await this.loadData() as Partial<ReferenceMapSettings> | null
+		this.settings = { ...DEFAULT_SETTINGS, ...(savedSettings ?? {}) }
 	}
 
 	async saveSettings() {
@@ -188,7 +184,7 @@ export default class ReferenceMap extends Plugin {
 		try {
 			const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (!markdownView || markdownView.getMode() !== 'source') {
-				new Notice('No active markdown view OR in Reading view');
+				new Notice('No active Markdown view or in reading view');
 				return;
 			}
 			const selection = markdownView.editor.getSelection().trim();
@@ -210,7 +206,7 @@ export default class ReferenceMap extends Plugin {
 			await activeLeaf.openFile(targetFile, { state: { mode: 'source' } });
 			// activeLeaf.setEphemeralState({ rename: 'all' });
 			// await new CursorJumper(this.app).jumpToNextCursorLocation();
-		} catch (err) {
+		} catch {
 			new Notice('Sorry, something went wrong.');
 		}
 	}
@@ -219,7 +215,7 @@ export default class ReferenceMap extends Plugin {
 		try {
 			const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (!markdownView || markdownView.getMode() !== 'source') {
-				new Notice('No active markdown view OR in Reading view');
+				new Notice('No active Markdown view or in reading view');
 				return;
 			}
 			const selection = markdownView.editor.getSelection().trim();
@@ -229,7 +225,7 @@ export default class ReferenceMap extends Plugin {
 			}
 			const renderedContents = await this.getRenderedContentsForInsert(reference);
 			markdownView.editor.replaceRange(renderedContents, markdownView.editor.getCursor());
-		} catch (err) {
+		} catch {
 			new Notice('Sorry, something went wrong.');
 		}
 	}
@@ -286,22 +282,22 @@ export default class ReferenceMap extends Plugin {
 			leaf = existingPluginLeaves[0];
 		} else {
 			leaf = workspace.getLeaf('split', 'vertical');
-			leaf.setViewState({ type: REFERENCE_MAP_GRAPH_VIEW_TYPE });
+			void leaf.setViewState({ type: REFERENCE_MAP_GRAPH_VIEW_TYPE });
 		}
 		if (active) {
-			workspace.revealLeaf(leaf);
+			void workspace.revealLeaf(leaf);
 		}
 	}
 
 	async convertSelectionToZoteroLink() {
 		try {
 			if (!this.settings.searchCiteKey) {
-				new Notice('Please enable Get references using citeKey in the settings.');
+				new Notice('Please enable get references using citekey in the settings.');
 				return;
 			}
 			const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (!markdownView || markdownView.getMode() !== 'source') {
-				new Notice('No active markdown view OR in Reading view');
+				new Notice('No active Markdown view or in reading view');
 				return;
 			}
 
@@ -318,7 +314,7 @@ export default class ReferenceMap extends Plugin {
 				new Notice('No citekey found in the selection.');
 				return;
 			}
-		} catch (err) {
+		} catch {
 			new Notice('Sorry, something went wrong.');
 		}
 
