@@ -1,9 +1,8 @@
-import * as fs from 'fs'
 import { parse } from '@retorquere/bibtex-parser'
 import _ from 'lodash';
 import { CiteKey, IndexPaper, Library, LocalCache, RELOAD, Reload } from 'src/types';
 import { DEFAULT_LIBRARY, EXCLUDE_FILE_NAMES } from 'src/constants';
-import { getCanvasContent, getLinkedFiles, removeNullReferences, resolvePath } from 'src/utils/functions'
+import { getCanvasContent, getLinkedFiles, removeNullReferences } from 'src/utils/functions'
 import { convertToCiteKeyEntry, fillMissingReference, indexSort, setCiteKeyId } from 'src/utils/postprocess';
 import { PromiseCapability } from 'src/promise';
 import { getZBib } from 'src/utils/zotero';
@@ -13,7 +12,7 @@ import { CiteKeyEntry } from 'src/apis/bibTypes';
 import { getCSLLocale, getCSLStyle } from 'src/utils/cslHelpers';
 import { cslList } from 'src/utils/cslList';
 import { cslLangList } from 'src/utils/cslLangList'
-import { MetadataCache, TFile, Vault } from 'obsidian';
+import { MetadataCache, normalizePath, TFile, Vault } from 'obsidian';
 
 export class ReferenceMapData {
     plugin: ReferenceMap
@@ -37,14 +36,15 @@ export class ReferenceMapData {
 
     async loadCache() {
         const { cacheDir, settings } = this.plugin;
-        if (!fs.existsSync(cacheDir)) {
-            fs.mkdirSync(cacheDir);
+        const adapter = this.plugin.app.vault.adapter;
+        if (!(await adapter.exists(cacheDir))) {
+            await adapter.mkdir(cacheDir);
         }
         this.cache.styleURL = cslList.find((item) => item.label === settings.cslStyle)?.value ?? settings.defaultStyleURL
         this.cache.locale = cslLangList.find((item) => item.label === settings.cslLocale)?.value ?? settings.defaultLocale
         // The following will set the style cache and localeCache
-        const citationStyle = await getCSLStyle(this.cache.styleCache, cacheDir, this.cache.styleURL);
-        const citationLocale = await getCSLLocale(this.cache.localeCache, cacheDir, this.cache.locale);
+        const citationStyle = await getCSLStyle(this.cache.styleCache, adapter, cacheDir, this.cache.styleURL);
+        const citationLocale = await getCSLLocale(this.cache.localeCache, adapter, cacheDir, this.cache.locale);
 
         if (citationStyle && citationLocale) {
             return true;
@@ -87,6 +87,7 @@ export class ReferenceMapData {
 
     async loadBibFileFromCache(fromCache?: boolean) {
         const { settings, cacheDir } = this.plugin;
+        const adapter = this.plugin.app.vault.adapter;
         if (!settings.zoteroGroups?.length) return;
 
         const bib: CiteKeyEntry[] = [];
@@ -94,6 +95,7 @@ export class ReferenceMapData {
             try {
                 const list = await getZBib(
                     settings.zoteroPort,
+                    adapter,
                     cacheDir,
                     group.id,
                     fromCache
@@ -119,16 +121,18 @@ export class ReferenceMapData {
     loadBibFileFromUserPath = async () => {
         const { searchCiteKey, searchCiteKeyPath, debugMode } = this.plugin.settings;
         if (!searchCiteKey || !searchCiteKeyPath) return null;
-        const libraryPath = resolvePath(searchCiteKeyPath, this.plugin.app);
+        const libraryPath = normalizePath(searchCiteKeyPath);
+        const adapter = this.plugin.app.vault.adapter;
         try {
-            const stats = fs.statSync(libraryPath);
-            const mtime = stats.mtimeMs;
+            const stats = await adapter.stat(libraryPath);
+            if (!stats) return null;
+            const mtime = stats.mtime;
             if (mtime === this.library.mtime) return null;
 
             if (debugMode) console.log(`LF: Loading library from '${searchCiteKeyPath}'`);
             let rawData;
             try {
-                rawData = fs.readFileSync(libraryPath).toString();
+                rawData = await adapter.read(libraryPath);
             } catch (e) {
                 if (debugMode) console.warn('LF: Warnings associated with loading the library file.');
                 return null;
@@ -378,4 +382,3 @@ export class ReferenceMapData {
         return indexCardsTemp
     }
 }
-

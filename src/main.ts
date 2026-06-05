@@ -1,5 +1,4 @@
-import path from 'path'
-import { MarkdownView, Notice, Plugin, WorkspaceLeaf } from 'obsidian'
+import { MarkdownView, normalizePath, Notice, Plugin, WorkspaceLeaf } from 'obsidian'
 import { DIRECTION, Direction, MetaData, RELOAD, ReferenceMapSettings } from './types'
 import { DEFAULT_SETTINGS, METADATA_MODAL_CREATE_TEMPLATE, METADATA_MODAL_INSERT_TEMPLATE } from './constants'
 import { ReferenceMapSettingTab } from './settings/settings'
@@ -7,7 +6,7 @@ import { PromiseCapability } from './promise'
 import { addIcons } from './icons'
 import { SidebarView, REFERENCE_MAP_VIEW_TYPE } from './sidebar/SidebarView'
 import { GraphView, REFERENCE_MAP_GRAPH_VIEW_TYPE } from './graph/GraphView';
-import { getVaultRoot, makeFileName } from './utils/functions'
+import { makeFileName } from './utils/functions'
 import { templateReplace } from './utils/postprocess'
 import { ReferenceMapData } from './data/data'
 import { UpdateChecker } from './data/updateChecker'
@@ -30,7 +29,9 @@ export default class ReferenceMap extends Plugin {
 	}
 
 	async onload() {
-		this.cacheDir = path.join(getVaultRoot(this.app), '.literature-flow');
+		const pluginDir = this.manifest.dir ??
+			`${this.app.vault.configDir}/plugins/${this.manifest.id}`;
+		this.cacheDir = normalizePath(`${pluginDir}/cache`);
 		this.referenceMapData = new ReferenceMapData(this)
 		this.updateChecker = new UpdateChecker()
 		this.loadSettings().then(() => {

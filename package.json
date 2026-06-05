@@ -1,7 +1,7 @@
 {
 	"name": "literature-flow",
-	"version": "1.9.0",
-	"description": "Open-access literature discovery and citation mapping",
+	"version": "1.9.1",
+	"description": "Open-access literature discovery and citation mapping.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

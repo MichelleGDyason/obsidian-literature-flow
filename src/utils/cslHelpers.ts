@@ -3,12 +3,12 @@
 // with some modifications
 
 import https from "https";
-import fs from "fs";
-import { ensureDir } from "./functions";
-import path from "path";
+import { normalizePath } from "obsidian";
+import type { DataAdapter } from "obsidian";
 
 export async function getCSLLocale(
     localeCache: Map<string, string>,
+    adapter: DataAdapter,
     cacheDir: string,
     lang: string
 ): Promise<string> {
@@ -19,11 +19,10 @@ export async function getCSLLocale(
     }
 
     const url = `https://raw.githubusercontent.com/citation-style-language/locales/master/locales-${lang}.xml`;
-    const outPath = path.join(cacheDir, `locales-${lang}.xml`);
+    const outPath = normalizePath(`${cacheDir}/locales-${lang}.xml`);
 
-    ensureDir(cacheDir);
-    if (fs.existsSync(outPath)) {
-        const localeData = fs.readFileSync(outPath).toString();
+    if (await adapter.exists(outPath)) {
+        const localeData = await adapter.read(outPath);
         localeCache.set(lang, localeData);
         return localeData;
     }
@@ -48,13 +47,14 @@ export async function getCSLLocale(
         });
     });
 
-    fs.writeFileSync(outPath, str);
+    await adapter.write(outPath, str);
     localeCache.set(lang, str);
     return str;
 }
 
 export async function getCSLStyle(
     styleCache: Map<string, string>,
+    adapter: DataAdapter,
     cacheDir: string,
     url: string,
 ): Promise<string> {
@@ -65,11 +65,10 @@ export async function getCSLStyle(
     }
 
     const fileFromURL = url.split('/').pop();
-    const outPath = path.join(cacheDir, fileFromURL ?? '');
+    const outPath = normalizePath(`${cacheDir}/${fileFromURL ?? ''}`);
 
-    ensureDir(cacheDir);
-    if (fs.existsSync(outPath)) {
-        const styleData = fs.readFileSync(outPath).toString();
+    if (await adapter.exists(outPath)) {
+        const styleData = await adapter.read(outPath);
         styleCache.set(url, styleData);
         return styleData;
     }
@@ -94,7 +93,7 @@ export async function getCSLStyle(
         });
     });
 
-    fs.writeFileSync(outPath, str);
+    await adapter.write(outPath, str);
     styleCache.set(url, str);
     return str;
 }

@@ -1,12 +1,11 @@
 // Following functions are copied from 
 // https://github.com/mgmeyers/obsidian-pandoc-reference-list/blob/main/src/bib/helpers.ts
 // with some modifications
-import fs from "fs";
 import http, { request } from "http";
-import path from "path";
+import { normalizePath } from "obsidian";
+import type { DataAdapter } from "obsidian";
 import { DEFAULT_HEADERS, DEFAULT_ZOTERO_PORT } from "src/constants";
 import { CSLList, PartialCSLEntry } from "src/types";
-import { ensureDir } from "./functions";
 
 function getGlobal() {
     if (window?.activeWindow) return activeWindow;
@@ -54,19 +53,23 @@ function applyGroupID(list: CSLList, groupId: number) {
 }
 
 export async function getZBib(
-    port: string = DEFAULT_ZOTERO_PORT,
+    port: string,
+    adapter: DataAdapter,
     cacheDir: string,
     groupId: number,
     loadCached?: boolean
 ) {
     const isRunning = await isZoteroRunning(port);
-    const cached = path.join(cacheDir, `zotero-library-${groupId}.json`);
+    const cached = normalizePath(`${cacheDir}/zotero-library-${groupId}.json`);
 
-    ensureDir(cacheDir);
+    if (!(await adapter.exists(cacheDir))) {
+        await adapter.mkdir(cacheDir);
+    }
+
     if (loadCached || !isRunning) {
-        if (fs.existsSync(cached)) {
+        if (await adapter.exists(cached)) {
             return applyGroupID(
-                JSON.parse(fs.readFileSync(cached).toString()) as CSLList,
+                JSON.parse(await adapter.read(cached)) as CSLList,
                 groupId
             );
         }
@@ -96,7 +99,7 @@ export async function getZBib(
 
     const str = bib.toString();
 
-    fs.writeFileSync(cached, str);
+    await adapter.write(cached, str);
 
     return applyGroupID(JSON.parse(str) as CSLList, groupId);
 }
@@ -212,7 +215,8 @@ export async function getZModified(
 }
 
 export async function refreshZBib(
-    port: string = DEFAULT_ZOTERO_PORT,
+    port: string,
+    adapter: DataAdapter,
     cacheDir: string,
     groupId: number,
     since: number
@@ -221,9 +225,11 @@ export async function refreshZBib(
         return null;
     }
 
-    const cached = path.join(cacheDir, `zotero-library-${groupId}.json`);
-    ensureDir(cacheDir);
-    if (!fs.existsSync(cached)) {
+    const cached = normalizePath(`${cacheDir}/zotero-library-${groupId}.json`);
+    if (!(await adapter.exists(cacheDir))) {
+        await adapter.mkdir(cacheDir);
+    }
+    if (!(await adapter.exists(cached))) {
         return null;
     }
 
@@ -244,7 +250,7 @@ export async function refreshZBib(
         newKeys.add(mod.id);
     }
 
-    const list = JSON.parse(fs.readFileSync(cached).toString()) as CSLList;
+    const list = JSON.parse(await adapter.read(cached)) as CSLList;
 
     for (let i = 0; i < list.length; i++) {
         const item = list[i];
@@ -264,7 +270,7 @@ export async function refreshZBib(
         }
     }
 
-    fs.writeFileSync(cached, JSON.stringify(list));
+    await adapter.write(cached, JSON.stringify(list));
 
     return {
         list: applyGroupID(list, groupId),

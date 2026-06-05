@@ -575,8 +575,9 @@ body {
 	align-items: stretch;
 }
 
-.lf-setting-item-wrapper > div {
-	margin-right: 0 !important;
+.setting-item.lf-setting-item-wrapper > .setting-item-info,
+.setting-item.lf-setting-item-wrapper > .setting-item-control {
+	margin-right: 0;
 }
 
 .lf-setting-item-wrapper > div:last-child {

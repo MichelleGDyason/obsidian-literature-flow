@@ -1,16 +1,8 @@
-import { App, FileSystemAdapter, MetadataCache, Notice, TFile, Vault, htmlToMarkdown } from 'obsidian'
-import path from 'path'
-import fs from "fs";
+import { MetadataCache, Notice, TFile, Vault, htmlToMarkdown } from 'obsidian'
 import { CardSpecType, IndexPaper, MetaData } from 'src/types'
 import { templateReplace } from './postprocess';
 import { CanvasData, CanvasNodeData } from 'obsidian/canvas';
 import { Reference } from 'src/apis/s2agTypes';
-
-export function ensureDir(dir: string) {
-	if (!fs.existsSync(dir)) {
-		fs.mkdirSync(dir, { recursive: true });
-	}
-}
 
 export function splitString(str: string | undefined, length: number) {
 	if (!str) return ''
@@ -27,11 +19,6 @@ export const getLinkedFiles = (file: TFile, metadataCache: MetadataCache) => {
 		}
 	}
 	return []
-}
-
-export function getVaultRoot(app: App) {
-	// This is a desktop only plugin, so assume adapter is FileSystemAdapter
-	return (app.vault.adapter as FileSystemAdapter).getBasePath();
 }
 
 export const fragWithHTML = (html: string) =>
@@ -56,15 +43,6 @@ export function camelToNormalCase(str: string) {
 	return str.replace(/([A-Z])/g, ' $1').replace(/^./, function (str) {
 		return str.toUpperCase()
 	})
-}
-
-// Get normalized path
-export const resolvePath = function (rawPath: string, app: App): string {
-	const vaultRoot =
-		app.vault.adapter instanceof FileSystemAdapter
-			? app.vault.adapter.getBasePath()
-			: '/'
-	return path.normalize(path.resolve(vaultRoot, rawPath))
 }
 
 export function copyToClipboard(el: string) {

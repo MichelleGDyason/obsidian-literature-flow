@@ -1,5 +1,14 @@
 # Literature Flow
 
+## 1.9.1 - 2026-06-06
+
+### Changed
+
+- Replace direct Node.js filesystem access with Obsidian's vault adapter.
+- Store generated CSL and Zotero cache files inside the plugin directory.
+- Restrict bibliography file loading to vault-relative paths.
+- Remove the CSS `!important` override and punctuate the plugin description.
+
 ## 1.9.0 - 2026-06-06
 
 ### Added

@@ -1,12 +1,12 @@
 import React from 'react';
-import { App, debounce } from 'obsidian';
+import { App, debounce, normalizePath } from 'obsidian';
 import { createRoot } from 'react-dom/client'
-import { FileSystemAdapter, PluginSettingTab, Setting } from 'obsidian'
+import { PluginSettingTab, Setting } from 'obsidian'
 import { RELOAD, SEARCH_PROVIDER, SearchProvider } from '../types'
 import ReferenceMap from '../main'
 import { t } from '../lang/helpers'
 import { ZoteroPullSetting } from './ZoteroPullSettings'
-import { fragWithHTML, resolvePath } from '../utils/functions'
+import { fragWithHTML } from '../utils/functions'
 import { ButtonSettings } from './ButtonSettings';
 import { CSLListSuggest, CSLLocaleSuggest, FolderSuggest } from './list-suggest';
 
@@ -33,7 +33,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 		this.citationPathLoadingEl.addClass('d-none')
 		if (filePath.endsWith('.json') || filePath.endsWith('.bib')) {
 			try {
-				await FileSystemAdapter.readLocalFile(resolvePath(filePath, this.app))
+				await this.app.vault.adapter.read(normalizePath(filePath))
 				this.citationPathErrorEl.addClass('d-none')
 			} catch (e) {
 				this.citationPathSuccessEl.addClass('d-none')
