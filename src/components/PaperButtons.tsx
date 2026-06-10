@@ -10,6 +10,7 @@ type Props = {
 	settings: ReferenceMapSettings
 	paper: IndexPaper
 	showCountButtons?: boolean
+	showActionButtons?: boolean
 	setShowReferences?: React.Dispatch<React.SetStateAction<boolean>>
 	showReferences?: boolean
 	setShowCitations?: React.Dispatch<React.SetStateAction<boolean>>
@@ -25,6 +26,7 @@ export const PaperButtons = ({
 	settings,
 	paper,
 	showCountButtons = true,
+	showActionButtons = true,
 	setShowReferences = undefined,
 	showReferences = false,
 	setShowCitations = undefined,
@@ -110,9 +112,20 @@ export const PaperButtons = ({
 		}
 	};
 
-	const renderButton = (showCondition: boolean, clickHandler: () => void, count: number, className: string, isEnabled: boolean) => (
+	const renderButton = (
+		showCondition: boolean,
+		clickHandler: () => void,
+		count: number,
+		className: string,
+		isEnabled: boolean,
+		title: string
+	) => (
 		<div
 			className={isEnabled ? className : 'lf-button-disabled'}
+			title={title}
+			aria-label={`${title}: ${count}`}
+			role={isEnabled ? 'button' : undefined}
+			tabIndex={isEnabled ? 0 : undefined}
 			style={
 				showCondition && isEnabled
 					? {
@@ -122,6 +135,12 @@ export const PaperButtons = ({
 					: {}
 			}
 			onClick={isEnabled ? clickHandler : undefined}
+			onKeyDown={isEnabled ? (event) => {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault()
+					clickHandler()
+				}
+			} : undefined}
 		>
 			{count}
 		</div>
@@ -131,10 +150,27 @@ export const PaperButtons = ({
 		<>
 			{!paper.isLocal &&
 				<>
-				{renderButton(showReferences, handleShowReferencesClick, metaData.referenceCount, "lf-button-references", isReferenceCount && showCountButtons)}
-				{renderButton(showCitations, handleShowCitationsClick, metaData.citationCount, "lf-button-citations", isCitationCount && showCountButtons)}
+				{renderButton(
+					showReferences,
+					handleShowReferencesClick,
+					metaData.referenceCount,
+					"lf-button-references",
+					isReferenceCount && showCountButtons && Boolean(setShowReferences),
+					'References cited by this work'
+				)}
+				{renderButton(
+					showCitations,
+					handleShowCitationsClick,
+					metaData.citationCount,
+					"lf-button-citations",
+					isCitationCount && showCountButtons && Boolean(setShowCitations),
+					'Works citing this reference'
+				)}
 					{settings.influentialCount && (
-						<div className="lf-button-disabled">
+						<div
+							className="lf-button-disabled"
+							title="Influential citation count"
+						>
 							{metaData.influentialCount}
 						</div>
 					)}
@@ -150,7 +186,7 @@ export const PaperButtons = ({
 
 	return (
 		<div className="lf-paper-buttons">
-			{settings.formatMetadataCopyOne && (
+			{showActionButtons && settings.formatMetadataCopyOne && (
 				<div
 					className="lf-copy-metadata-one"
 					onClick={() => {
@@ -160,7 +196,7 @@ export const PaperButtons = ({
 					<CopyIconOne />
 				</div>
 			)}
-			{settings.formatMetadataCopyTwo && (
+			{showActionButtons && settings.formatMetadataCopyTwo && (
 				<div
 					className="lf-copy-metadata-two"
 					onClick={() => {
@@ -170,7 +206,7 @@ export const PaperButtons = ({
 					<CopyIconTwo />
 				</div>
 			)}
-			{settings.formatMetadataCopyThree && (
+			{showActionButtons && settings.formatMetadataCopyThree && (
 				<div
 					className="lf-copy-metadata-three"
 					onClick={() => {
@@ -180,17 +216,17 @@ export const PaperButtons = ({
 					<CopyIconThree />
 				</div>
 			)}
-			{hasOpenAccessLocation(paper.paper) ? (
+			{showActionButtons && hasOpenAccessLocation(paper.paper) ? (
 				<div className="lf-openaccess">
 					<a href={metaData.pdfurl}>
 						<OpenAccessIcon />
 					</a>
 				</div>
-			) : (
+			) : showActionButtons ? (
 				<div className="lf-button-disable">
 						<OpenAccessIcon />
 				</div>
-			)}
+			) : null}
 			{citingCited}
 		</div>
 	)

@@ -24,14 +24,30 @@ export const IndexPaperCard = (props: IndexCardsProps) => {
 	const [isButtonShown, setIsButtonShown] = useState(!props.plugin.settings.hideButtonsOnHover)
 	const [isReferenceLoading, setIsReferenceLoading] = useState(false)
 	const [isCitationLoading, setIsCitationLoading] = useState(false)
+	const [referencesLoaded, setReferencesLoaded] = useState(false)
+	const [citationsLoaded, setCitationsLoaded] = useState(false)
 	const { settings } = props.plugin
 
 	useEffect(() => {
-		if (props.indexPaper.paper.paperId && !props.indexPaper.isLocal) {
-			void getCitations()
+		setReferences([])
+		setCitations([])
+		setReferencesLoaded(false)
+		setCitationsLoaded(false)
+		setShowReferences(false)
+		setShowCitations(false)
+	}, [props.indexPaper.paper.paperId])
+
+	useEffect(() => {
+		if (showReferences && !referencesLoaded) {
 			void getReferences()
 		}
-	}, [props.indexPaper.isLocal])
+	}, [showReferences, referencesLoaded])
+
+	useEffect(() => {
+		if (showCitations && !citationsLoaded) {
+			void getCitations()
+		}
+	}, [showCitations, citationsLoaded])
 
 	useEffect(() => {
 		setIsButtonShown(!settings.hideButtonsOnHover)
@@ -52,6 +68,7 @@ export const IndexPaperCard = (props: IndexCardsProps) => {
 			? references.filter((reference) => (reference.referenceCount && reference.referenceCount > 0) || (reference.citationCount && reference.citationCount > 0))
 			: references;
 		setReferences(filteredReferences);
+		setReferencesLoaded(true);
 		setIsReferenceLoading(false);
 	};
 
@@ -62,6 +79,7 @@ export const IndexPaperCard = (props: IndexCardsProps) => {
 			? citations.filter((citation) => (citation.referenceCount && citation.referenceCount > 0) || (citation.citationCount && citation.citationCount > 0))
 			: citations;
 		setCitations(filteredCitations);
+		setCitationsLoaded(true);
 		setIsCitationLoading(false);
 	};
 
@@ -88,31 +106,62 @@ export const IndexPaperCard = (props: IndexCardsProps) => {
 			onMouseLeave={() => handleHoverButtons(false)}
 		>
 			<PaperHeading paper={props.indexPaper} settings={settings} />
-			{isButtonShown && (
-				<PaperButtons
-					settings={settings}
-					paper={props.indexPaper}
-					setShowReferences={setShowReferences}
-					showReferences={showReferences}
-					setShowCitations={setShowCitations}
-					showCitations={showCitations}
-					setIsButtonShown={setIsButtonShown}
-					isButtonShown={isButtonShown}
-					batchCopyMetadataOne={batchCopyMetadata[0]}
-					batchCopyMetadataTwo={batchCopyMetadata[1]}
-					batchCopyMetadataThree={batchCopyMetadata[2]}
-				/>
-			)}
+			<PaperButtons
+				settings={settings}
+				paper={props.indexPaper}
+				showActionButtons={isButtonShown}
+				setShowReferences={setShowReferences}
+				showReferences={showReferences}
+				setShowCitations={setShowCitations}
+				showCitations={showCitations}
+				setIsButtonShown={setIsButtonShown}
+				isButtonShown={isButtonShown}
+				batchCopyMetadataOne={batchCopyMetadata[0]}
+				batchCopyMetadataTwo={batchCopyMetadata[1]}
+				batchCopyMetadataThree={batchCopyMetadata[2]}
+			/>
 			{(isCitationLoading || isReferenceLoading) && (
 				<div className="lf-loading">
 					<LoadingPuff />
 				</div>
 			)}
 			{showReferences && (
-				<PaperList settings={settings} papers={references} type={'References'} />
+				<PaperList
+					settings={settings}
+					papers={references}
+					type={'References'}
+					renderPaper={(paper, index) => (
+						<IndexPaperCard
+							key={`${paper.paperId}-${index}`}
+							plugin={props.plugin}
+							indexPaper={{
+								id: paper.paperId,
+								location: null,
+								paper,
+							}}
+							viewManager={props.viewManager}
+						/>
+					)}
+				/>
 			)}
 			{showCitations && (
-				<PaperList settings={settings} papers={citations} type={'Citations'} />
+				<PaperList
+					settings={settings}
+					papers={citations}
+					type={'Citations'}
+					renderPaper={(paper, index) => (
+						<IndexPaperCard
+							key={`${paper.paperId}-${index}`}
+							plugin={props.plugin}
+							indexPaper={{
+								id: paper.paperId,
+								location: null,
+								paper,
+							}}
+							viewManager={props.viewManager}
+						/>
+					)}
+				/>
 			)}
 		</div>
 	)

@@ -16,6 +16,7 @@ export type Reference = {
     publicationTypes?: string[]
     publicationDate?: string
     journal?: Journal
+    publisher?: string
     citationStyles?: CitationStyles
     authors?: Author[]
     // from other sources
@@ -42,6 +43,7 @@ export type Journal = {
     name?: string
     pages?: string
     volume?: string
+    issue?: string
 }
 
 export type CitationStyles = {

@@ -59,5 +59,6 @@ export type OpenAlexLocation = {
 	source?: {
 		display_name?: string
 		type?: string
+		host_organization_name?: string
 	} | null
 }

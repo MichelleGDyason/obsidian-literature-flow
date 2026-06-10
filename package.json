@@ -1,6 +1,6 @@
 {
 	"name": "literature-flow",
-	"version": "1.10.0",
+	"version": "1.11.0",
 	"description": "Open-access literature discovery and citation mapping.",
 	"main": "main.js",
 	"scripts": {

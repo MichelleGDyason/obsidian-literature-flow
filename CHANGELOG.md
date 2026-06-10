@@ -1,5 +1,21 @@
 # Literature Flow
 
+## 1.11.0 - 2026-06-10
+
+### Added
+
+- Add vault-backed journal article and book templates for Search Online and Create.
+- Automatically select the book template for books, monographs, edited books, and book chapters.
+- Fill matching blank or question-mark YAML fields while preserving the rest of the selected template.
+- Add template variables for citekey, issue, publisher, publication type, and source.
+- Add hover labels and keyboard access to reference and citation count controls.
+
+### Changed
+
+- Keep reference and citation count controls visible when other card actions are hidden until hover.
+- Load cited and citing works only when their count control is opened.
+- Allow cited and citing cards to expand their own reference and citation lists.
+
 ## 1.10.0 - 2026-06-10
 
 ### Added

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import { ReferenceMapSettings } from 'src/types'
 import { PaperCard } from './PaperCard'
 import { dataSearch, dataSort } from 'src/utils/postprocess'
@@ -9,9 +9,15 @@ type PaperListProps = {
 	papers: Reference[]
 	settings: ReferenceMapSettings
 	type: string
+	renderPaper?: (paper: Reference, index: number) => ReactNode
 }
 
-export const PaperList: React.FC<PaperListProps> = ({ papers, settings, type }) => {
+export const PaperList: React.FC<PaperListProps> = ({
+	papers,
+	settings,
+	type,
+	renderPaper,
+}) => {
 	const [query, setQuery] = useState('')
 
 	const sortedPapers = settings.enableReferenceSorting
@@ -22,14 +28,18 @@ export const PaperList: React.FC<PaperListProps> = ({ papers, settings, type }) 
 		)
 		: papers
 
-	const paperList = dataSearch(sortedPapers, query).map((paper, index) => (
-		<PaperCard
-			key={`${paper.paperId}-${index}`}
-			paper={{ id: paper.paperId, location: null, paper }}
-			settings={settings}
-			showCountButtons={false}
-		/>
-	))
+	const paperList = dataSearch(sortedPapers, query).map((paper, index) =>
+		renderPaper
+			? renderPaper(paper, index)
+			: (
+				<PaperCard
+					key={`${paper.paperId}-${index}`}
+					paper={{ id: paper.paperId, location: null, paper }}
+					settings={settings}
+					showCountButtons={false}
+				/>
+			)
+	)
 
 	return (
 		<div className="lf-paper-list">

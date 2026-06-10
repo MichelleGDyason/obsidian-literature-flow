@@ -114,7 +114,11 @@ export const mapOpenAlexWork = (work: OpenAlexWork): Reference => {
 			name: journalName,
 			pages: makePages(work),
 			volume: work.biblio?.volume ?? undefined,
+			issue: work.biblio?.issue ?? undefined,
 		},
+		publisher: work.primary_location?.source?.host_organization_name
+			?? work.best_oa_location?.source?.host_organization_name
+			?? undefined,
 		citationStyles: {
 			bibtex: makeBibtex(work, doi),
 		},

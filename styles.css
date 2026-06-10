@@ -364,6 +364,11 @@ body {
 	color: var(--lf-paper-buttons-hover-color);
 }
 
+.lf-button-references,
+.lf-button-citations {
+	cursor: pointer;
+}
+
 .lf-is-local{
 	font-size: var(--font-ui-smaller);
 }

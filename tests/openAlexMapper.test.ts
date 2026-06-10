@@ -38,6 +38,7 @@ test('maps an open access work into the Reference model', () => {
 			source: {
 				display_name: 'Journal of Open Research',
 				type: 'journal',
+				host_organization_name: 'Open Research Society',
 			},
 		},
 		best_oa_location: {
@@ -54,6 +55,7 @@ test('maps an open access work into the Reference model', () => {
 		cited_by_count: 34,
 		biblio: {
 			volume: '5',
+			issue: '2',
 			first_page: '10',
 			last_page: '18',
 		},
@@ -67,6 +69,8 @@ test('maps an open access work into the Reference model', () => {
 	assert.equal(reference.abstract, 'Open research access')
 	assert.equal(reference.openAccessPdf?.url, 'https://example.org/article.pdf')
 	assert.equal(reference.journal?.pages, '10-18')
+	assert.equal(reference.journal?.issue, '2')
+	assert.equal(reference.publisher, 'Open Research Society')
 	assert.equal(reference.authors?.[0]?.name, 'Ada Lovelace')
 	assert.match(reference.citationStyles?.bibtex ?? '', /@article\{Lovelace2026Open/)
 	assert.match(reference.citationStyles?.bibtex ?? '', /doi = \{10\.1234\/example\}/)

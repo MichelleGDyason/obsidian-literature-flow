@@ -53,6 +53,9 @@ export type ReferenceMapSettings = {
 	modalSearchLimit: number
 	fileNameFormat: string
 	folder: string
+	useVaultCreateTemplates: boolean
+	articleTemplatePath: string
+	bookTemplatePath: string
 	modalCreateTemplate: string
 	modalInsertTemplate: string
 	formatMetadataCopyOne: boolean
@@ -81,11 +84,15 @@ export type MetaData = {
 	year: string
 	journal: string
 	volume: string
+	issue: string
 	pages: string
 	abstract: string
 	url: string
 	pdfurl: string
 	doi: string
+	publisher: string
+	publicationType: string
+	citekey: string
 	referenceCount: number
 	citationCount: number
 	influentialCount: number

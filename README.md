@@ -141,7 +141,28 @@ If you select a text in the current document and then issue the command the sele
 | Literature Flow: Search and Insert | Search for references online to insert details in the current document. | - |
 | Literature Flow: Search and Create | Search for references online to create a new markdown file using the details | - |
 
-You can configure the template for both commands in the settings tab.
+You can configure the insert template in settings. New notes can use either the inline create template or separate Markdown template files from your vault.
+
+#### Vault templates for new notes
+
+Enable **Use vault templates for new notes** under **Literature Flow settings → Discovery and access**, then select:
+
+- A **Journal article template** for articles and other non-book works.
+- A **Book template** for books, monographs, edited books, and book chapters.
+
+Literature Flow reads the selected template without modifying the template file. It replaces supported `{{variables}}` and fills matching YAML fields when their current value is blank, `null`, or ends in `?`. Existing completed YAML values, lists, custom fields, and the note body are preserved.
+
+Supported variables include:
+
+```text
+{{title}} {{author}} {{authors}} {{year}} {{journal}}
+{{volume}} {{issue}} {{pages}} {{abstract}} {{doi}}
+{{url}} {{pdfurl}} {{publisher}} {{publicationType}}
+{{publication_type}} {{type}} {{citekey}} {{source}}
+{{bibtex}} {{csl}}
+```
+
+Common YAML keys filled automatically include `title`, `author`, `authors`, `year`, `journal`, `volume`, `issue`, `pages`, `doi`, `publisher`, `publication_type`, `citekey`, `source_url`, `pdf_url`, `abstract`, and `type`. The generated `type` value is `reading_note`; `publication_type` is `Journal article` or `Book`.
 
 #### Discovery and access
 
@@ -152,6 +173,8 @@ The literature source applies consistently to Search Online, dynamic note search
 - **OpenAlex + Semantic Scholar** queries both sources, removes duplicates, and prefers the OpenAlex record when both describe the same DOI.
 
 **Open access only** is enabled by default. A work flows into Literature Flow only when the selected source supplies a usable open-access location. Clicking its title opens that location directly rather than sending you through a general index page.
+
+Reference and citation counts remain visible at the bottom of expandable sidebar cards. Hovering a count identifies it as **References cited by this work** or **Works citing this reference**. Opening a count loads that list on demand, and entries in those lists can be expanded again.
 
 Affiliated researchers can disable **Open access only** to include restricted works. The optional **Institutional access link template** can then route those title links through a university or library login. Use `{{url}}` for the encoded DOI or publisher destination and `{{doi}}` for the encoded DOI value. For example:
 

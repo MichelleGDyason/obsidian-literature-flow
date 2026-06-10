@@ -1,4 +1,14 @@
-import { MarkdownView, normalizePath, Notice, Plugin, WorkspaceLeaf } from 'obsidian'
+import {
+	getFrontMatterInfo,
+	MarkdownView,
+	normalizePath,
+	Notice,
+	parseYaml,
+	Plugin,
+	stringifyYaml,
+	TFile,
+	WorkspaceLeaf,
+} from 'obsidian'
 import { DIRECTION, Direction, MetaData, RELOAD, ReferenceMapSettings } from './types'
 import { DEFAULT_SETTINGS, METADATA_MODAL_CREATE_TEMPLATE, METADATA_MODAL_INSERT_TEMPLATE } from './constants'
 import { ReferenceMapSettingTab } from './settings/settings'
@@ -7,12 +17,16 @@ import { addIcons } from './icons'
 import { SidebarView, REFERENCE_MAP_VIEW_TYPE } from './sidebar/SidebarView'
 import { GraphView, REFERENCE_MAP_GRAPH_VIEW_TYPE } from './graph/GraphView';
 import { makeFileName } from './utils/functions'
-import { templateReplace } from './utils/postprocess'
+import { makeMetaData, templateReplace } from './utils/postprocess'
 import { ReferenceMapData } from './data/data'
 import { UpdateChecker } from './data/updateChecker'
 import { Reference } from './apis/s2agTypes'
 import { ReferenceSearchModal } from './search/SearchModal'
 import { ReferenceSuggestModal } from './search/SuggestModal'
+import {
+	fillTemplateFrontmatter,
+	getCreateTemplateKind,
+} from './utils/noteTemplate'
 
 export default class ReferenceMap extends Plugin {
 	public settings: ReferenceMapSettings
@@ -188,13 +202,21 @@ export default class ReferenceMap extends Plugin {
 				return;
 			}
 			const selection = markdownView.editor.getSelection().trim();
-			const metaData = await this.searchReferenceMetadata(selection, 'create');
+			const reference = await this.searchReference(selection, 'create');
+			const metaData = makeMetaData({
+				id: reference.paperId,
+				location: null,
+				paper: reference,
+			});
 			const activeLeaf = this.app.workspace.getLeaf();
 			if (!activeLeaf) {
 				new Notice('No active leaf');
 				return;
 			}
-			const renderedContents = await this.getRenderedContentsForCreate(metaData);
+			const renderedContents = await this.getRenderedContentsForCreate(
+				metaData,
+				reference
+			);
 			const fileName = makeFileName(metaData, this.settings.fileNameFormat);
 			let filePath;
 			if (this.settings.folder) {
@@ -219,18 +241,23 @@ export default class ReferenceMap extends Plugin {
 				return;
 			}
 			const selection = markdownView.editor.getSelection().trim();
-			const reference = await this.searchReferenceMetadata(selection, 'insert');
+			const reference = await this.searchReference(selection, 'insert');
 			if (!markdownView.editor) {
 				return;
 			}
-			const renderedContents = await this.getRenderedContentsForInsert(reference);
+			const metaData = makeMetaData({
+				id: reference.paperId,
+				location: null,
+				paper: reference,
+			});
+			const renderedContents = await this.getRenderedContentsForInsert(metaData);
 			markdownView.editor.replaceRange(renderedContents, markdownView.editor.getCursor());
 		} catch {
 			new Notice('Sorry, something went wrong.');
 		}
 	}
 
-	async searchReferenceMetadata(query?: string, mode?: string): Promise<MetaData> {
+	async searchReference(query?: string, mode?: string): Promise<Reference> {
 		const searchedReferences = await this.openReferenceSearchModal(query, mode);
 		return await this.openReferenceSuggestModal(searchedReferences);
 	}
@@ -250,9 +277,9 @@ export default class ReferenceMap extends Plugin {
 	}
 
 	// Assuming the second problem is in a similar function
-	async openReferenceSuggestModal(references: Reference[]): Promise<MetaData> {
+	async openReferenceSuggestModal(references: Reference[]): Promise<Reference> {
 		return new Promise((resolve, reject) => {
-			new ReferenceSuggestModal(this.app, references, (error, selectedReference?: MetaData) => {
+			new ReferenceSuggestModal(this.app, references, (error, selectedReference?: Reference) => {
 				if (error) {
 					reject(error);
 				} else if (selectedReference) {
@@ -269,9 +296,67 @@ export default class ReferenceMap extends Plugin {
 		return templateReplace(template, metaData);
 	}
 
-	async getRenderedContentsForCreate(metaData: MetaData): Promise<string> {
-		const template = this.settings.modalCreateTemplate || METADATA_MODAL_CREATE_TEMPLATE;
-		return templateReplace(template, metaData);
+	private fillCreateTemplateFrontmatter(
+		content: string,
+		metaData: MetaData,
+		reference: Reference
+	): string {
+		const info = getFrontMatterInfo(content)
+		if (!info.exists) return content
+
+		try {
+			const parsed = parseYaml(info.frontmatter) as Record<string, unknown> | null
+			const frontmatter = fillTemplateFrontmatter(
+				parsed ?? {},
+				metaData,
+				getCreateTemplateKind(reference)
+			)
+			const yaml = stringifyYaml(frontmatter).trimEnd()
+			return `${content.slice(0, info.from)}${yaml}\n${content.slice(info.to)}`
+		} catch (error) {
+			if (this.settings.debugMode) {
+				console.error('LF: Could not fill template frontmatter', error)
+			}
+			return content
+		}
+	}
+
+	private async getVaultCreateTemplate(
+		reference: Reference
+	): Promise<string | null> {
+		const kind = getCreateTemplateKind(reference)
+		const templatePath = kind === 'book'
+			? this.settings.bookTemplatePath
+			: this.settings.articleTemplatePath
+		if (!templatePath.trim()) {
+			new Notice(`No ${kind} template is selected. Using the inline create template.`)
+			return null
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(
+			normalizePath(templatePath)
+		)
+		if (!(file instanceof TFile)) {
+			new Notice(`Literature Flow could not find ${kind} template: ${templatePath}`)
+			return null
+		}
+		return this.app.vault.read(file)
+	}
+
+	async getRenderedContentsForCreate(
+		metaData: MetaData,
+		reference: Reference
+	): Promise<string> {
+		const vaultTemplate = this.settings.useVaultCreateTemplates
+			? await this.getVaultCreateTemplate(reference)
+			: null
+		const template = vaultTemplate
+			?? this.settings.modalCreateTemplate
+			?? METADATA_MODAL_CREATE_TEMPLATE
+		const rendered = templateReplace(template, metaData)
+		return vaultTemplate
+			? this.fillCreateTemplateFrontmatter(rendered, metaData, reference)
+			: rendered
 	}
 
 	async openReferenceMapGraph(active = false) {

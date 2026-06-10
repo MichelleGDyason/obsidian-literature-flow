@@ -12,6 +12,7 @@ export const makeMetaData = (data: IndexPaper): MetaData => {
     const year = paper.year?.toString().trim() ?? 'Could not recover Year';
     const journal = paper.journal?.name?.trim() ?? 'Could not recover Journal';
     const volume = paper.journal?.volume?.trim() ?? 'Could not recover Volume';
+    const issue = paper.journal?.issue?.trim() ?? '';
     const pages = paper.journal?.pages?.trim() ?? 'Could not recover Pages';
     const abstract = paper.abstract?.trim() ?? 'No abstract available';
     const bibTex = paper.citationStyles?.bibtex ?? 'No BibTex available';
@@ -21,6 +22,13 @@ export const makeMetaData = (data: IndexPaper): MetaData => {
     const openAccessPdfUrl = paper.isOpenAccess ? paper.openAccessPdf?.url ?? '' : '';
     const paperURL = paper.url ?? 'Could not recover URL';
     const doi = paper.externalIds?.DOI ?? 'Could not recover DOI';
+    const publisher = paper.publisher?.trim() ?? '';
+    const publicationType = paper.type
+        ?? paper.publicationTypes?.[0]
+        ?? 'article';
+    const citekey = paper.citationStyles?.bibtex
+        ?.match(/@\w+\s*\{\s*([^,\s]+)\s*,/i)?.[1]
+        ?? '';
     const csl = paper.csl ?? 'Could not recover CSL';
 
     return {
@@ -31,11 +39,15 @@ export const makeMetaData = (data: IndexPaper): MetaData => {
         year,
         journal,
         volume,
+        issue,
         pages,
         abstract,
         url: paperURL,
         pdfurl: openAccessPdfUrl,
         doi,
+        publisher,
+        publicationType,
+        citekey,
         referenceCount,
         citationCount,
         influentialCount,
@@ -45,6 +57,9 @@ export const makeMetaData = (data: IndexPaper): MetaData => {
 
 export const templateReplace = (template: string, data: MetaData, id = '') => {
     if (id === '') { id = data.doi ? data.doi : ''; }
+    const normalizedPublicationType = /book|monograph/i.test(data.publicationType)
+        ? 'Book'
+        : 'Journal article';
     return template
         .replaceAll('{{id}}', id)
         .replaceAll('{{bibtex}}', data.bibtex)
@@ -54,11 +69,18 @@ export const templateReplace = (template: string, data: MetaData, id = '') => {
         .replaceAll('{{year}}', data.year.replace(/[:\\\\/]/g, ''))
         .replaceAll('{{journal}}', data.journal.replace(/[:\\\\/]/g, ''))
         .replaceAll('{{volume}}', data.volume.replace(/[:\\\\/]/g, ''))
+        .replaceAll('{{issue}}', data.issue.replace(/[:\\\\/]/g, ''))
         .replaceAll('{{pages}}', data.pages.replace(/[:\\\\/]/g, ''))
         .replaceAll('{{abstract}}', data.abstract)
         .replaceAll('{{url}}', data.url)
         .replaceAll('{{pdfurl}}', data.pdfurl)
         .replaceAll('{{doi}}', data.doi)
+        .replaceAll('{{publisher}}', data.publisher)
+        .replaceAll('{{publicationType}}', normalizedPublicationType)
+        .replaceAll('{{publication_type}}', normalizedPublicationType)
+        .replaceAll('{{type}}', 'reading_note')
+        .replaceAll('{{citekey}}', data.citekey)
+        .replaceAll('{{source}}', data.journal)
         .replaceAll('{{csl}}', data.csl?.toString() || 'Could not recover CSL');
 };
 
@@ -146,8 +168,10 @@ export function fillMissingReference(citeKeyEntry: CiteKeyEntry | undefined, ref
         ref.journal = ref.journal ?? {
             name: citeKeyEntry['container-title'],
             volume: citeKeyEntry.volume,
+            issue: citeKeyEntry.issue,
             pages: citeKeyEntry.page,
         };
+        ref.publisher = ref.publisher ?? citeKeyEntry.publisher;
         ref.authors = ref.authors ?? citeKeyEntry.author?.map((author) => {
             if (author.literal) {
                 return {

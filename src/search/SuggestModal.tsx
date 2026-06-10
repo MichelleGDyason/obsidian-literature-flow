@@ -1,13 +1,12 @@
 import { SuggestModal, App } from "obsidian";
 import { Reference } from "src/apis/s2agTypes";
-import { MetaData } from "src/types";
 import { makeMetaData } from "src/utils/postprocess";
 
 export class ReferenceSuggestModal extends SuggestModal<Reference> {
     constructor(
         app: App,
         private readonly suggestion: Reference[],
-        private onChoose: (error: Error | null, results?: MetaData) => void
+        private onChoose: (error: Error | null, result?: Reference) => void
     ) {
         super(app);
     }
@@ -27,6 +26,6 @@ export class ReferenceSuggestModal extends SuggestModal<Reference> {
 
     // Perform action on the selected suggestion.
     onChooseSuggestion(reference: Reference) {
-        this.onChoose(null, makeMetaData({ id: reference.paperId, location: null, paper: reference }));
+        this.onChoose(null, reference);
     }
 }

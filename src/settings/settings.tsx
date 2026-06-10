@@ -8,7 +8,12 @@ import { t } from '../lang/helpers'
 import { ZoteroPullSetting } from './ZoteroPullSettings'
 import { fragWithHTML } from '../utils/functions'
 import { ButtonSettings } from './ButtonSettings';
-import { CSLListSuggest, CSLLocaleSuggest, FolderSuggest } from './list-suggest';
+import {
+	CSLListSuggest,
+	CSLLocaleSuggest,
+	FileSuggest,
+	FolderSuggest,
+} from './list-suggest';
 
 const CSL_LABEL = 'CSL'
 
@@ -597,19 +602,62 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 						void this.plugin.saveSettings()
 					})
 			)
+
 		new Setting(containerEl)
-			.setName(fragWithHTML(t('MODAL_SEARCH_CREATE_FILE_TEMPLATE')))
-			.setDesc(fragWithHTML(t('MODAL_SEARCH_CREATE_FILE_TEMPLATE_DESC')))
-			.addTextArea((text) => {
-				text.inputEl.rows = 7
-				text
-					.setValue(this.plugin.settings.modalCreateTemplate)
+			.setName('Use vault templates for new notes')
+			.setDesc('Choose separate Markdown templates for journal articles and books. The plugin replaces template variables and fills matching blank YAML fields.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.useVaultCreateTemplates)
 					.onChange(async (value) => {
-						this.plugin.settings.modalCreateTemplate = value
-						void this.plugin.saveSettings()
+						this.plugin.settings.useVaultCreateTemplates = value
+						await this.plugin.saveSettings()
+						this.display()
 					})
-			}
 			)
+
+		if (this.plugin.settings.useVaultCreateTemplates) {
+			new Setting(containerEl)
+				.setName('Journal article template')
+				.setDesc('Used for articles and other non-book scholarly works.')
+				.addSearch((search) => {
+					new FileSuggest(this.app, search.inputEl)
+					search
+						.setPlaceholder('Templates/Journal article.md')
+						.setValue(this.plugin.settings.articleTemplatePath)
+						.onChange(async (value) => {
+							this.plugin.settings.articleTemplatePath = value.trim()
+							await this.plugin.saveSettings()
+						})
+				})
+
+			new Setting(containerEl)
+				.setName('Book template')
+				.setDesc('Used for books, monographs, edited books, and book chapters.')
+				.addSearch((search) => {
+					new FileSuggest(this.app, search.inputEl)
+					search
+						.setPlaceholder('Templates/Book.md')
+						.setValue(this.plugin.settings.bookTemplatePath)
+						.onChange(async (value) => {
+							this.plugin.settings.bookTemplatePath = value.trim()
+							await this.plugin.saveSettings()
+						})
+				})
+		} else {
+			new Setting(containerEl)
+				.setName(fragWithHTML(t('MODAL_SEARCH_CREATE_FILE_TEMPLATE')))
+				.setDesc(fragWithHTML(t('MODAL_SEARCH_CREATE_FILE_TEMPLATE_DESC')))
+				.addTextArea((text) => {
+					text.inputEl.rows = 7
+					text
+						.setValue(this.plugin.settings.modalCreateTemplate)
+						.onChange(async (value) => {
+							this.plugin.settings.modalCreateTemplate = value
+							void this.plugin.saveSettings()
+						})
+				})
+		}
 
 		new Setting(containerEl)
 			.setName(fragWithHTML(t('MODAL_SEARCH_INSERT_TEMPLATE')))
