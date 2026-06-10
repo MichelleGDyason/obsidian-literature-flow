@@ -11,7 +11,7 @@ import { CiteKeyEntry } from 'src/apis/bibTypes';
 import { getCSLLocale, getCSLStyle } from 'src/utils/cslHelpers';
 import { cslList } from 'src/utils/cslList';
 import { cslLangList } from 'src/utils/cslLangList'
-import { MetadataCache, normalizePath, TFile, Vault } from 'obsidian';
+import { MetadataCache, normalizePath, Notice, TFile, Vault } from 'obsidian';
 
 export class ReferenceMapData {
     plugin: ReferenceMap
@@ -86,23 +86,35 @@ export class ReferenceMapData {
         if (!settings.zoteroGroups?.length) return;
 
         const bib: CiteKeyEntry[] = [];
+        const issues: string[] = [];
         for (const group of settings.zoteroGroups) {
             try {
-                const list = await getZBib(
+                const result = await getZBib(
                     settings.zoteroPort,
                     adapter,
                     cacheDir,
                     group.id,
                     fromCache
                 );
-                if (list?.length) {
-                    bib.push(...list);
-                    group.lastUpdate = Date.now();
+                if (result?.entries.length) {
+                    bib.push(...result.entries);
+                    if (result.source === 'live') {
+                        group.lastUpdate = Date.now();
+                    }
                 }
-            } catch (e) {
-                console.error('Error fetching bibliography from Zotero', e);
-                continue;
+                if (result?.warning) {
+                    issues.push(`${group.name}: ${result.warning}`);
+                }
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                issues.push(`${group.name}: ${message}`);
             }
+        }
+        if (issues.length > 0) {
+            new Notice(
+                `Literature Flow could not refresh some Zotero libraries. Cached data was used when available. ${issues.join(' ')}`,
+                12000
+            );
         }
         this.library = {
             active: true,

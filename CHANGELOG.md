@@ -1,5 +1,14 @@
 # Literature Flow
 
+## 1.9.3 - 2026-06-09
+
+### Fixed
+
+- Replace the Better BibTeX pull-export request, which fails when Zotero has no active pane, with a filtered JSON-RPC bibliography query.
+- Exclude annotation, attachment, and note records that Better BibTeX cannot convert into bibliography entries.
+- Validate Zotero responses before writing cache files so plain-text errors cannot corrupt the bibliography cache.
+- Fall back to the last valid cache and show one actionable Obsidian notice when a live Zotero refresh fails.
+
 ## 1.9.2 - 2026-06-06
 
 ### Changed

@@ -125,10 +125,11 @@ export type CSLList = PartialCSLEntry[];
 
 export type PartialCSLEntry = {
 	id: string;
-	title: string;
+	title?: string;
 	groupID?: number;
 	citekey?: string;
 	'citation-key'?: string;
+	[key: string]: unknown;
 }
 
 export type ZoteroGroup = {

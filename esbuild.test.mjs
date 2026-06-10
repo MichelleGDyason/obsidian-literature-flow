@@ -5,11 +5,11 @@ import path from 'node:path'
 import process from 'node:process'
 import esbuild from 'esbuild'
 
-const outfile = path.join(tmpdir(), `literature-flow-openalex-${process.pid}.test.cjs`)
+const outfile = path.join(tmpdir(), `literature-flow-${process.pid}.test.cjs`)
 
 try {
 	await esbuild.build({
-		entryPoints: ['tests/openAlexMapper.test.ts'],
+		entryPoints: ['tests/index.test.ts'],
 		bundle: true,
 		format: 'cjs',
 		outfile,
