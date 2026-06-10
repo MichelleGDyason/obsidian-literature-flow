@@ -4,11 +4,13 @@ import { Reference } from "./apis/s2agTypes"
 export const SEARCH_PROVIDER = {
 	SEMANTIC_SCHOLAR: 'semantic-scholar',
 	OPENALEX: 'openalex',
+	BOTH: 'both',
 } as const
 
 export const SEARCH_PROVIDER_LABEL = {
 	SEMANTIC_SCHOLAR: 'Semantic Scholar',
 	OPENALEX: 'OpenAlex',
+	BOTH: 'OpenAlex + Semantic Scholar',
 } as const
 
 export type SearchProvider = typeof SEARCH_PROVIDER[keyof typeof SEARCH_PROVIDER]
@@ -45,6 +47,8 @@ export type ReferenceMapSettings = {
 	sortByIndex: string
 	sortOrderIndex: string
 	modalSearchProvider: SearchProvider
+	openAccessOnly: boolean
+	institutionalAccessUrlTemplate: string
 	openAlexApiKey: string
 	modalSearchLimit: number
 	fileNameFormat: string

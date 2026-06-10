@@ -3,7 +3,7 @@ import { ViewManager } from 'src/data/viewManager';
 import { getPaperIds } from 'src/utils/parser';
 import ReferenceMap from 'src/main';
 import { Reference } from 'src/apis/s2agTypes';
-import { SEARCH_PROVIDER, SEARCH_PROVIDER_LABEL, SearchProvider } from 'src/types';
+import { RELOAD, SEARCH_PROVIDER, SEARCH_PROVIDER_LABEL, SearchProvider } from 'src/types';
 
 export class ReferenceSearchModal extends Modal {
     private isBusy = false;
@@ -37,45 +37,36 @@ export class ReferenceSearchModal extends Modal {
                 this.setBusy(true);
                 const paperIds = getPaperIds(this.query);
                 const viewManager = new ViewManager(this.plugin);
-                if (this.provider === SEARCH_PROVIDER.OPENALEX) {
-                    const doi = Array.from(paperIds).find((paperId) => /^10\./i.test(paperId));
-                    const searchResults = doi
-                        ? [await viewManager.getOpenAccessPaperByDoi(doi)].filter(
-                            (paper): paper is Reference => paper !== null
-                        )
-                        : await viewManager.searchOpenAccessPapers(
-                            this.query,
-                            this.plugin.settings.modalSearchLimit,
-                            false
-                        );
-                    this.setBusy(false);
-                    if (!searchResults.length) {
-                        new Notice(`No open access results found for "${this.query}"`);
-                        return;
-                    }
-                    this.callback(null, searchResults);
-                    this.close();
-                    return;
-                }
-
                 if (paperIds.size > 0) {
-                    const paperPromises = Array.from(paperIds).map((paperId) => new ViewManager(this.plugin).getIndexPaper(paperId));
+                    const paperPromises = Array.from(paperIds).map(
+                        (paperId) => viewManager.getIndexPaper(paperId, false)
+                    );
                     const papers = await Promise.all(paperPromises);
-                    const validPapers = papers.filter((paper) => paper !== null) as Reference[];
+                    const validPapers = papers.filter(
+                        (paper): paper is Reference => Boolean(paper)
+                    );
                     if (validPapers.length > 0) {
                         this.callback(null, validPapers);
                         this.close();
                         return;
                     }
                     this.setBusy(false);
-                    new Notice(`No results found for "${this.query}"`);
+                    new Notice(
+                        this.plugin.settings.openAccessOnly
+                            ? `No open access results found for "${this.query}"`
+                            : `No results found for "${this.query}"`
+                    );
                     return;
                 } else {
                     const searchResults = await viewManager.searchIndexPapers(this.query, this.plugin.settings.modalSearchLimit, false)
                     this.setBusy(false);
 
                     if (!searchResults?.length) {
-                        new Notice(`No results found for "${this.query}"`);
+                        new Notice(
+                            this.plugin.settings.openAccessOnly
+                                ? `No open access results found for "${this.query}"`
+                                : `No results found for "${this.query}"`
+                        );
                         return;
                     }
                     this.callback(null, searchResults);
@@ -107,18 +98,23 @@ export class ReferenceSearchModal extends Modal {
         new Setting(contentEl)
             .setName('Search source')
             .setDesc(
-                this.provider === SEARCH_PROVIDER.OPENALEX
-                    ? 'OpenAlex searches open access works only.'
-                    : 'Semantic Scholar searches its full paper index.'
+                this.plugin.settings.openAccessOnly
+                    ? 'Only results with a usable open-access location are included.'
+                    : 'Restricted results are included for institutional-library users.'
             )
             .addDropdown(dropdown => dropdown
+                .addOption(SEARCH_PROVIDER.OPENALEX, SEARCH_PROVIDER_LABEL.OPENALEX)
                 .addOption(SEARCH_PROVIDER.SEMANTIC_SCHOLAR, SEARCH_PROVIDER_LABEL.SEMANTIC_SCHOLAR)
-                .addOption(SEARCH_PROVIDER.OPENALEX, `${SEARCH_PROVIDER_LABEL.OPENALEX} (open access only)`)
+                .addOption(SEARCH_PROVIDER.BOTH, SEARCH_PROVIDER_LABEL.BOTH)
                 .setValue(this.provider)
                 .onChange(async (value) => {
                     this.provider = value as SearchProvider;
                     this.plugin.settings.modalSearchProvider = this.provider;
+                    this.plugin.referenceMapData.viewManager.clearCache();
                     await this.plugin.saveSettings();
+                    if (this.plugin.view) {
+                        void this.plugin.referenceMapData.reload(RELOAD.VIEW);
+                    }
                     this.contentEl.empty();
                     this.onOpen();
                 }));

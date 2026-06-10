@@ -2,6 +2,7 @@ import React from 'react'
 import { METADATA_COPY_TEMPLATE_ONE, METADATA_COPY_TEMPLATE_THREE, METADATA_COPY_TEMPLATE_TWO, } from 'src/constants'
 import { OpenAccessIcon, CopyIconOne, CopyIconTwo, CopyIconThree } from 'src/icons'
 import { IndexPaper, ReferenceMapSettings } from 'src/types'
+import { hasOpenAccessLocation } from 'src/utils/access'
 import { copyToClipboard } from 'src/utils/functions'
 import { makeMetaData, templateReplace } from 'src/utils/postprocess'
 
@@ -179,9 +180,9 @@ export const PaperButtons = ({
 					<CopyIconThree />
 				</div>
 			)}
-			{paper.paper?.isOpenAccess ? (
+			{hasOpenAccessLocation(paper.paper) ? (
 				<div className="lf-openaccess">
-					<a href={`${metaData.pdfurl}`}>
+					<a href={metaData.pdfurl}>
 						<OpenAccessIcon />
 					</a>
 				</div>

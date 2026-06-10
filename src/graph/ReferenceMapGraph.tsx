@@ -139,10 +139,10 @@ export const ReferenceMapGraph = (props: {
 
     const fetchData = async (indexCards: IndexPaper[]) => {
         const dataPromises = indexCards.map(async (paper) => {
-            const references = await viewManager.getReferences(paper.paper.paperId);
+            const references = await viewManager.getReferences(paper.paper);
             const filteredReferences = filterReferences(references, settings);
 
-            const citations = await viewManager.getCitations(paper.paper.paperId);
+            const citations = await viewManager.getCitations(paper.paper);
             const filteredCitations = filterReferences(citations, settings);
 
             return {

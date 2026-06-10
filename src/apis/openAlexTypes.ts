@@ -25,6 +25,7 @@ export type OpenAlexWork = {
 		oa_status?: string
 		oa_url?: string | null
 	} | null
+	referenced_works?: string[]
 	referenced_works_count?: number
 	cited_by_count?: number
 	biblio?: {

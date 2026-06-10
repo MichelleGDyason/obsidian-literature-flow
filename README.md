@@ -7,7 +7,7 @@
 
 # Literature Flow
 
-Literature Flow is an [Obsidian](https://obsidian.md/) plugin for open-access literature discovery, reference management, and citation mapping. It provides a sidebar for cited and citing works, online search through Semantic Scholar or OpenAlex, and a literature graph.
+Literature Flow is an [Obsidian](https://obsidian.md/) plugin for open-access literature discovery, reference management, and citation mapping. OpenAlex is the default source, and open-access-only filtering is applied to search, cited and citing works, and the literature graph.
 
 Project documentation is maintained in this README.
 
@@ -66,9 +66,9 @@ Each Index card or citing/cited card in the view will show the following informa
 
 | Button | Section                    | Description                                                                                                                                                                    | On Click                                                                                                            |
 | ------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| text   | Title                      | Title of the paper                                                                                                                                                             | Open the paper in [Semantic Scholar](https://www.semanticscholar.org/)                                              |
+| text   | Title                      | Title of the paper                                                                                                                                                             | Open the best available open-access location, or a configured institutional-library link                           |
 |        | Abstract                   | Abstract of the paper (Default=OFF)                                                                                                                                            | -                                                                                                                   |
-| text   | Authors                    | Authors of the paper                                                                                                                                                           | Open the author's details in [Semantic Scholar](https://www.semanticscholar.org/)                                   |
+| text   | Authors                    | Authors of the paper                                                                                                                                                           | Open the author's details in the selected metadata source                                                           |
 |        | Year                       | Year of publication                                                                                                                                                            | -                                                                                                                   |
 | text   | citekey                    | Pandoc citekey (Default=OFF)                                                                                                                                                   | Open reference in the Zotero Library                                                                                |
 | (1)    | Metadata copy              | User defined format of metadata. Default=`bibtex` of the paper                                                                                                                 | Copy the `<bibtex>` to the clipboard (If Batch copy is enabled it will copy `<bibtex>` for all the cited paper)     |
@@ -143,16 +143,23 @@ If you select a text in the current document and then issue the command the sele
 
 You can configure the template for both commands in the settings tab.
 
-#### Open Access search
+#### Discovery and access
 
-The Search Online and Insert/Create modal can use either:
+The literature source applies consistently to Search Online, dynamic note searches, sidebar reference and citation lists, and the literature graph:
 
-- **Semantic Scholar** for the original search behaviour.
-- **OpenAlex (open access only)** to search titles, abstracts, and indexed full text while filtering results to works with an open access location.
+- **OpenAlex** is the default and supports open-access search and citation traversal.
+- **Semantic Scholar** can be selected for its paper index.
+- **OpenAlex + Semantic Scholar** queries both sources, removes duplicates, and prefers the OpenAlex record when both describe the same DOI.
 
-OpenAlex permits a small unauthenticated allowance of 100 credits per day. For regular use, create a free API key at [openalex.org/settings/api](https://openalex.org/settings/api) to receive 100,000 credits per day, then enter it under **Literature Flow settings → Search Settings**.
+**Open access only** is enabled by default. A work flows into Literature Flow only when the selected source supplies a usable open-access location. Clicking its title opens that location directly rather than sending you through a general index page.
 
-OpenAlex is used only for the Search Online and Insert/Create workflow. Citation lists, reference lists, and the literature graph continue to use Semantic Scholar.
+Affiliated researchers can disable **Open access only** to include restricted works. The optional **Institutional access link template** can then route those title links through a university or library login. Use `{{url}}` for the encoded DOI or publisher destination and `{{doi}}` for the encoded DOI value. For example:
+
+```text
+https://ezproxy.example.edu/login?url={{url}}
+```
+
+OpenAlex now uses a credit-based API and provides the normal free daily allowance with a free API key. Create one at [openalex.org/settings/api](https://openalex.org/settings/api), then enter it under **Literature Flow settings → Discovery and access**. Unauthenticated usage is intentionally very limited.
 
 
 ### Literature Flow Graph

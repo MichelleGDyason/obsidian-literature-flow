@@ -47,7 +47,7 @@ export const IndexPaperCard = (props: IndexCardsProps) => {
 
 	const getReferences = async () => {
 		setIsReferenceLoading(true);
-		const references = await props.viewManager.getReferences(props.indexPaper.paper.paperId);
+		const references = await props.viewManager.getReferences(props.indexPaper.paper);
 		const filteredReferences = settings.filterRedundantReferences
 			? references.filter((reference) => (reference.referenceCount && reference.referenceCount > 0) || (reference.citationCount && reference.citationCount > 0))
 			: references;
@@ -57,7 +57,7 @@ export const IndexPaperCard = (props: IndexCardsProps) => {
 
 	const getCitations = async () => {
 		setIsCitationLoading(true);
-		const citations = await props.viewManager.getCitations(props.indexPaper.paper.paperId);
+		const citations = await props.viewManager.getCitations(props.indexPaper.paper);
 		const filteredCitations = settings.filterRedundantReferences
 			? citations.filter((citation) => (citation.referenceCount && citation.referenceCount > 0) || (citation.citationCount && citation.citationCount > 0))
 			: citations;

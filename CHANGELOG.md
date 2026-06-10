@@ -1,5 +1,20 @@
 # Literature Flow
 
+## 1.10.0 - 2026-06-10
+
+### Added
+
+- Add OpenAlex, Semantic Scholar, and combined literature-source choices for search, sidebar references and citations, and the literature graph.
+- Add an open-access-only policy that is enabled by default across the plugin.
+- Add an optional institutional-access link template for affiliated researchers who deliberately include restricted works.
+
+### Changed
+
+- Make OpenAlex the default literature source for new installations.
+- Send open-access title clicks directly to a usable open location instead of routing them through Semantic Scholar.
+- Prefer OpenAlex metadata when combined-provider results describe the same DOI.
+- Update OpenAlex API-key guidance for the current credit-based API.
+
 ## 1.9.3 - 2026-06-10
 
 ### Fixed

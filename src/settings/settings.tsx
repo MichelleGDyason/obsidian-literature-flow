@@ -473,26 +473,69 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 			);
 		})
 
-				new Setting(containerEl).setName('Search').setHeading()
+			new Setting(containerEl).setName('Discovery and access').setHeading()
 			new Setting(containerEl)
-				.setName('Online search source')
-				.setDesc(`Choose the provider used by search online and insert/create. Sidebar citation graphs continue to use ${SEARCH_PROVIDER_LABEL.SEMANTIC_SCHOLAR}.`)
+				.setName('Literature source')
+				.setDesc('Choose the source used for online search, sidebar references and citations, and the literature graph. The default source is shown first.')
 				.addDropdown((dropdown) =>
 					dropdown
+						.addOption(SEARCH_PROVIDER.OPENALEX, SEARCH_PROVIDER_LABEL.OPENALEX)
 						.addOption(SEARCH_PROVIDER.SEMANTIC_SCHOLAR, SEARCH_PROVIDER_LABEL.SEMANTIC_SCHOLAR)
-						.addOption(SEARCH_PROVIDER.OPENALEX, `${SEARCH_PROVIDER_LABEL.OPENALEX} (open access only)`)
+						.addOption(SEARCH_PROVIDER.BOTH, SEARCH_PROVIDER_LABEL.BOTH)
 						.setValue(this.plugin.settings.modalSearchProvider)
 						.onChange(async (value) => {
 							this.plugin.settings.modalSearchProvider = value as SearchProvider
+							this.plugin.referenceMapData.viewManager.clearCache()
 							await this.plugin.saveSettings()
+							if (this.plugin.view) {
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
+							}
 							this.display()
 						})
 				)
 
-			if (this.plugin.settings.modalSearchProvider === SEARCH_PROVIDER.OPENALEX) {
+			new Setting(containerEl)
+				.setName('Open access only')
+				.setDesc('Recommended and enabled by default. Only works with a usable open-access location flow into search results, reference lists, citation lists, and the graph.')
+				.addToggle((toggle) =>
+					toggle
+						.setValue(this.plugin.settings.openAccessOnly)
+						.onChange(async (value) => {
+							this.plugin.settings.openAccessOnly = value
+							this.plugin.referenceMapData.viewManager.clearCache()
+							await this.plugin.saveSettings()
+							if (this.plugin.view) {
+								void this.plugin.referenceMapData.reload(RELOAD.VIEW)
+							}
+							this.display()
+						})
+				)
+
+			if (!this.plugin.settings.openAccessOnly) {
+				new Setting(containerEl)
+					.setName('Institutional access link template')
+					.setDesc('Optional. Route restricted results through your university or library. Use {{url}} for the encoded DOI or publisher URL and {{doi}} for the encoded DOI value. Example: https://ezproxy.example.edu/login?url={{url}}')
+					.addText((text) =>
+						text
+							.setPlaceholder('https://library.example/login?url={{url}}')
+							.setValue(this.plugin.settings.institutionalAccessUrlTemplate)
+							.onChange(async (value) => {
+								this.plugin.settings.institutionalAccessUrlTemplate = value.trim()
+								await this.plugin.saveSettings()
+								if (this.plugin.view) {
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
+								}
+							})
+					)
+			}
+
+			if (
+				this.plugin.settings.modalSearchProvider === SEARCH_PROVIDER.OPENALEX
+				|| this.plugin.settings.modalSearchProvider === SEARCH_PROVIDER.BOTH
+			) {
 				new Setting(containerEl)
 					.setName(`${SEARCH_PROVIDER_LABEL.OPENALEX} API key`)
-					.setDesc(fragWithHTML('Optional but recommended. Without a key OpenAlex allows 100 credits per day; a free key raises this to 100,000. Create one at <a href="https://openalex.org/settings/api">openalex.org/settings/api</a>.'))
+					.setDesc(fragWithHTML('Create a free API key at <a href="https://openalex.org/settings/api">openalex.org/settings/api</a>. OpenAlex provides a normal free daily allowance with a key; unauthenticated usage is intentionally very limited.'))
 					.addText((text) => {
 						text.inputEl.type = 'password'
 						text
@@ -500,6 +543,7 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 							.setValue(this.plugin.settings.openAlexApiKey)
 							.onChange(async (value) => {
 								this.plugin.settings.openAlexApiKey = value.trim()
+								this.plugin.referenceMapData.viewManager.clearCache()
 								await this.plugin.saveSettings()
 							})
 					})
