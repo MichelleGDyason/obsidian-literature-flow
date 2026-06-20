@@ -12,7 +12,7 @@ import { getCSLLocale, getCSLStyle } from 'src/utils/cslHelpers';
 import { cslList } from 'src/utils/cslList';
 import { cslLangList } from 'src/utils/cslLangList'
 import { MetadataCache, normalizePath, Notice, TFile, Vault } from 'obsidian';
-import { makeMatchSource, mergeMatchSources } from 'src/utils/matchSource';
+import { makeMatchSource, meetsMinimumMatchedTerms, mergeMatchSources } from 'src/utils/matchSource';
 
 export class ReferenceMapData {
     plugin: ReferenceMap
@@ -317,12 +317,13 @@ export class ReferenceMapData {
         if (settings.searchTitle && fileName && !EXCLUDE_FILE_NAMES.some(
             (name) => basename.toLowerCase() === name.toLowerCase())
         ) {
-            const matchSource = makeMatchSource('filename', fileName);
             const titleSearchPapers = await this.viewManager.searchIndexPapers(
                 fileName,
                 settings.searchLimit
             );
             titleSearchPapers.forEach((paper) => {
+                const matchSource = makeMatchSource('filename', fileName, undefined, paper);
+                if (!meetsMinimumMatchedTerms(matchSource, settings.dynamicSearchMinMatchedTerms)) return;
                 indexCards.push({
                     id: paper.paperId,
                     location: null,
@@ -335,10 +336,11 @@ export class ReferenceMapData {
 
         // Get references using the front matter
         if (settings.searchFrontMatter && frontmatter) {
-            const matchSource = makeMatchSource('frontmatter', frontmatter, settings.searchFrontMatterKey);
             const frontMatterPapers = await this.viewManager.searchIndexPapers(
                 frontmatter, settings.searchFrontMatterLimit);
             frontMatterPapers.forEach((paper) => {
+                const matchSource = makeMatchSource('frontmatter', frontmatter, settings.searchFrontMatterKey, paper);
+                if (!meetsMinimumMatchedTerms(matchSource, settings.dynamicSearchMinMatchedTerms)) return;
                 indexCards.push({
                     id: paper.paperId,
                     location: null,

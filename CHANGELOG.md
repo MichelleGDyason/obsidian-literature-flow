@@ -1,5 +1,15 @@
 # Literature Flow
 
+## 1.13.0 - 2026-06-20
+
+### Added
+
+- Add a Minimum matched terms setting for dynamic sidebar results from filename and frontmatter searches.
+
+### Changed
+
+- Show the filename or frontmatter terms found in each dynamic sidebar result's returned metadata.
+
 ## 1.12.0 - 2026-06-20
 
 ### Added

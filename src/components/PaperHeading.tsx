@@ -127,9 +127,12 @@ export const PaperHeading = ({ paper, settings }: PaperHeadingProps) => {
 
 	const getMatchSourceTitle = (source: MatchSource) => {
 		const sourceName = source.type === 'frontmatter'
-			? source.label
-			: source.label.toLowerCase();
-		return `Matched by ${sourceName} search terms: ${source.display}. Query sent: ${source.query}`;
+			? `frontmatter terms from ${source.label.replace('Frontmatter terms: ', '')}`
+			: 'filename terms';
+		if (source.matchedTerms.length > 0) {
+			return `${source.matchedTerms.length} of ${source.terms.length} ${sourceName} were found in this result: ${source.matchedTerms.join(', ')}. Full query sent: ${source.query}`;
+		}
+		return `Returned by the ${sourceName}, but no exact query terms were found in the returned metadata. Full query sent: ${source.query}`;
 	}
 
 	const CardTags = () => {

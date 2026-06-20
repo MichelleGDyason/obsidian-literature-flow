@@ -126,10 +126,17 @@ keywords: autoencoders, machine learning
 
 Cards will be displayed for references that match `autoencoders+machine+learning`.
 
-Dynamic sidebar cards show match-source tags such as `Filename: Attention all need`
-or `Frontmatter: keywords: autoencoders machine learning`. Hover a tag to see
-the raw query sent to the literature source, so irrelevant results can be traced
-back to the filename or frontmatter terms that produced them.
+Dynamic sidebar cards show match-source tags such as `Filename terms: Attention`
+or `Frontmatter terms: keywords: autoencoders, learning`. These tags list the
+query terms found in that result's returned metadata. Hover a tag to see the raw
+query sent to the literature source, so irrelevant results can be traced back to
+the filename or frontmatter search that produced them.
+
+Use **Minimum matched terms** in settings to filter weak dynamic recommendations.
+The default is `3`, which means a result from a filename or frontmatter search is
+shown only when at least three query terms appear in that result's returned
+metadata. If the query has fewer than three terms, all available query terms must
+match. Set the value to `0` to disable this filter.
 
 Note that since new references are added to the database regularly the dynamic list might not stay the same each time you open the file. Especially for generic keywords like `machine learning`, `deep learning`, `history` etc.
 

@@ -60,6 +60,9 @@ export default {
 	SEARCH_LIMIT: 'Get limit',
 	SEARCH_LIMIT_DESC:
 		'Number of entries shown in Literature Flow when <b>Get Using File Name</b> is enabled.',
+	DYNAMIC_SEARCH_MIN_MATCHED_TERMS: 'Minimum matched terms',
+	DYNAMIC_SEARCH_MIN_MATCHED_TERMS_DESC:
+		'Minimum number of filename or frontmatter search terms that must appear in a dynamic sidebar result. Set to 0 to disable this filter. If a query has fewer terms than this value, all available query terms must match.',
 	SEARCH_FRONT_MATTER: 'Get using frontmatter',
 	SEARCH_FRONT_MATTER_DESC:
 		'Find references also using the frontmatter of the markdown note file in addition to reference IDs.<br>' +

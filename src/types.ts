@@ -26,6 +26,7 @@ export type ReferenceMapSettings = {
 	lookupLinkedFiles: boolean
 	searchTitle: boolean
 	searchLimit: number
+	dynamicSearchMinMatchedTerms: number
 	searchFrontMatter: boolean
 	searchFrontMatterKey: string
 	searchFrontMatterLimit: number
@@ -106,6 +107,8 @@ export type MatchSource = {
 	label: string
 	query: string
 	display: string
+	terms: string[]
+	matchedTerms: string[]
 }
 
 export type IndexPaper = {

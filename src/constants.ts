@@ -48,6 +48,7 @@ export const DEFAULT_SETTINGS: ReferenceMapSettings = {
 	lookupLinkedFiles: false,
 	searchTitle: false,
 	searchLimit: 3,
+	dynamicSearchMinMatchedTerms: 3,
 	searchFrontMatter: false,
 	searchFrontMatterKey: 'keywords',
 	searchFrontMatterLimit: 3,

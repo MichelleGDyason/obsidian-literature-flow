@@ -841,6 +841,31 @@ export class ReferenceMapSettingTab extends PluginSettingTab {
 					})
 		}
 
+		let minMatchedTermsValue: HTMLDivElement
+		if (this.plugin.settings.searchTitle || this.plugin.settings.searchFrontMatter) {
+			new Setting(containerEl)
+				.setName(t('DYNAMIC_SEARCH_MIN_MATCHED_TERMS'))
+				.setDesc(fragWithHTML(t('DYNAMIC_SEARCH_MIN_MATCHED_TERMS_DESC')))
+				.addSlider((slider) =>
+					slider
+						.setLimits(0, 6, 1)
+						.setValue(this.plugin.settings.dynamicSearchMinMatchedTerms)
+						.onChange(async (value) => {
+							minMatchedTermsValue.setText(value.toString())
+							this.plugin.settings.dynamicSearchMinMatchedTerms = value
+							void this.plugin.saveSettings().then(() => {
+								if (this.plugin.view)
+									void this.plugin.referenceMapData.reload(RELOAD.VIEW)
+							})
+						})
+				)
+					.settingEl.createDiv('', (el) => {
+						minMatchedTermsValue = el
+						el.addClass('lf-slider-value')
+						el.setText(this.plugin.settings.dynamicSearchMinMatchedTerms.toString())
+					})
+		}
+
 		new Setting(containerEl)
 			.setName(fragWithHTML(t('DEBUG_MODE')))
 			.setDesc(fragWithHTML(t('DEBUG_MODE_DESC')))
