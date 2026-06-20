@@ -1,5 +1,5 @@
 import React from 'react';
-import { IndexPaper, ReferenceMapSettings } from 'src/types';
+import { IndexPaper, MatchSource, ReferenceMapSettings } from 'src/types';
 import { getAuthorUrl, getPaperUrl } from 'src/utils/access';
 import { splitString } from 'src/utils/functions';
 
@@ -125,6 +125,13 @@ export const PaperHeading = ({ paper, settings }: PaperHeadingProps) => {
 
 	}
 
+	const getMatchSourceTitle = (source: MatchSource) => {
+		const sourceName = source.type === 'frontmatter'
+			? source.label
+			: source.label.toLowerCase();
+		return `Matched by ${sourceName} search terms: ${source.display}. Query sent: ${source.query}`;
+	}
+
 	const CardTags = () => {
 		return (
 			<div className='lf-paper-tags'>
@@ -155,6 +162,15 @@ export const PaperHeading = ({ paper, settings }: PaperHeadingProps) => {
 				{!isLocal && !paper.paper.isOpenAccess && !settings.openAccessOnly && (
 					<span className="lf-paper-tag">Institutional access</span>
 				)}
+				{paper.matchSources?.map((source, index) => (
+					<span
+						key={`match-${index}`}
+						className="lf-paper-tag lf-paper-match-source"
+						title={getMatchSourceTitle(source)}
+					>
+						{source.label}: {source.display}
+					</span>
+				))}
 			</div>
 		);
 	}

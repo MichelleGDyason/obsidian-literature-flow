@@ -99,12 +99,22 @@ export type MetaData = {
 	csl?: string
 }
 
+export type MatchSourceType = 'filename' | 'frontmatter'
+
+export type MatchSource = {
+	type: MatchSourceType
+	label: string
+	query: string
+	display: string
+}
+
 export type IndexPaper = {
 	id: string
 	location: number | null
 	isLocal?: boolean
 	paper: Reference
 	bibEntry?: CiteKeyEntry
+	matchSources?: MatchSource[]
 }
 
 export type CiteKey = {

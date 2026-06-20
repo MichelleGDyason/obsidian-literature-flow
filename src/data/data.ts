@@ -1,7 +1,7 @@
 import { parse } from '@retorquere/bibtex-parser'
 import { CiteKey, IndexPaper, Library, LocalCache, RELOAD, Reload } from 'src/types';
 import { DEFAULT_LIBRARY, EXCLUDE_FILE_NAMES } from 'src/constants';
-import { getCanvasContent, getLinkedFiles, removeNullReferences, uniqueBy } from 'src/utils/functions'
+import { getCanvasContent, getLinkedFiles, removeNullReferences } from 'src/utils/functions'
 import { convertToCiteKeyEntry, fillMissingReference, indexSort, setCiteKeyId } from 'src/utils/postprocess';
 import { PromiseCapability } from 'src/promise';
 import { getZBib } from 'src/utils/zotero';
@@ -12,6 +12,7 @@ import { getCSLLocale, getCSLStyle } from 'src/utils/cslHelpers';
 import { cslList } from 'src/utils/cslList';
 import { cslLangList } from 'src/utils/cslLangList'
 import { MetadataCache, normalizePath, Notice, TFile, Vault } from 'obsidian';
+import { makeMatchSource, mergeMatchSources } from 'src/utils/matchSource';
 
 export class ReferenceMapData {
     plugin: ReferenceMap
@@ -316,21 +317,35 @@ export class ReferenceMapData {
         if (settings.searchTitle && fileName && !EXCLUDE_FILE_NAMES.some(
             (name) => basename.toLowerCase() === name.toLowerCase())
         ) {
+            const matchSource = makeMatchSource('filename', fileName);
             const titleSearchPapers = await this.viewManager.searchIndexPapers(
                 fileName,
                 settings.searchLimit
             );
             titleSearchPapers.forEach((paper) => {
-                indexCards.push({ id: paper.paperId, location: null, isLocal: false, paper });
+                indexCards.push({
+                    id: paper.paperId,
+                    location: null,
+                    isLocal: false,
+                    paper,
+                    matchSources: matchSource ? [matchSource] : undefined,
+                });
             });
         }
 
         // Get references using the front matter
         if (settings.searchFrontMatter && frontmatter) {
+            const matchSource = makeMatchSource('frontmatter', frontmatter, settings.searchFrontMatterKey);
             const frontMatterPapers = await this.viewManager.searchIndexPapers(
                 frontmatter, settings.searchFrontMatterLimit);
             frontMatterPapers.forEach((paper) => {
-                indexCards.push({ id: paper.paperId, location: null, isLocal: false, paper });
+                indexCards.push({
+                    id: paper.paperId,
+                    location: null,
+                    isLocal: false,
+                    paper,
+                    matchSources: matchSource ? [matchSource] : undefined,
+                });
             });
         }
 
@@ -375,7 +390,7 @@ export class ReferenceMapData {
             });
         }
 
-        indexCardsTemp = uniqueBy(indexCardsTemp, item => item.paper.paperId);
+        indexCardsTemp = this.mergeDuplicateIndexCards(indexCardsTemp);
 
         if (this.plugin.settings.enableIndexSorting) {
             indexCardsTemp = indexSort(
@@ -386,5 +401,25 @@ export class ReferenceMapData {
         }
 
         return indexCardsTemp
+    }
+
+    mergeDuplicateIndexCards = (indexCards: IndexPaper[]) => {
+        const indexCardMap = new Map<string, IndexPaper>();
+        indexCards.forEach((item) => {
+            const key = item.paper.paperId;
+            const existing = indexCardMap.get(key);
+            if (!existing) {
+                indexCardMap.set(key, item);
+                return;
+            }
+            existing.matchSources = mergeMatchSources(existing.matchSources, item.matchSources);
+            if (existing.location === null && item.location !== null) {
+                existing.location = item.location;
+            }
+            if (!existing.bibEntry && item.bibEntry) {
+                existing.bibEntry = item.bibEntry;
+            }
+        });
+        return Array.from(indexCardMap.values());
     }
 }

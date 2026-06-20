@@ -1,5 +1,15 @@
 # Literature Flow
 
+## 1.12.0 - 2026-06-20
+
+### Added
+
+- Show filename and frontmatter match-source tags on dynamically discovered sidebar references.
+
+### Changed
+
+- Merge duplicate dynamic sidebar cards so a paper can show every search source that found it.
+
 ## 1.11.0 - 2026-06-10
 
 ### Added

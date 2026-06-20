@@ -329,6 +329,11 @@ body {
 	color: var(--lf-paper-citekey-link-hover-color);
 }
 
+.lf-paper-match-source {
+	background-color: rgba(var(--color-accent-rgb), 0.12);
+	color: var(--text-normal);
+}
+
 .lf-paper-buttons {
 	width: 100%;
 	display: flex;

@@ -126,6 +126,11 @@ keywords: autoencoders, machine learning
 
 Cards will be displayed for references that match `autoencoders+machine+learning`.
 
+Dynamic sidebar cards show match-source tags such as `Filename: Attention all need`
+or `Frontmatter: keywords: autoencoders machine learning`. Hover a tag to see
+the raw query sent to the literature source, so irrelevant results can be traced
+back to the filename or frontmatter terms that produced them.
+
 Note that since new references are added to the database regularly the dynamic list might not stay the same each time you open the file. Especially for generic keywords like `machine learning`, `deep learning`, `history` etc.
 
 **This feature can be used for keeping up to date with the latest research in a specific field as well**

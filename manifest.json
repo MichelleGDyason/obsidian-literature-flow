@@ -1,7 +1,7 @@
 {
 	"id": "literature-flow",
 	"name": "Literature Flow",
-	"version": "1.11.0",
+	"version": "1.12.0",
 	"minAppVersion": "1.0",
 	"description": "Open-access literature discovery and citation mapping.",
 	"author": "Michelle G Dyason",
